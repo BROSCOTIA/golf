@@ -1,0 +1,124 @@
+@import "tailwindcss";
+
+@media print {
+  /* Hide interactive/navigation/fixed UI controls when printing */
+  header,
+  nav,
+  aside,
+  footer,
+  button,
+  input,
+  select,
+  .no-print,
+  .sticky,
+  .fixed,
+  [role="dialog"] button,
+  [role="dialog"] input,
+  [role="dialog"] select {
+    display: none !important;
+  }
+
+  /* Reset document background & text colors for high-contrast black/white print */
+  *, *::before, *::after {
+    background: transparent !important;
+    color: #0f172a !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    filter: none !important;
+  }
+
+  html, body {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 11pt !important;
+    line-height: 1.4 !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+    margin: 0 !important;
+    padding: 12mm !important;
+    width: 100% !important;
+  }
+
+  /* Full width container expansion */
+  main,
+  #root,
+  .printable-area {
+    position: static !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* Print Tables */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin-top: 12px !important;
+    margin-bottom: 12px !important;
+  }
+
+  th, td {
+    border: 1px solid #cbd5e1 !important;
+    padding: 6px 10px !important;
+    text-align: left !important;
+    font-size: 9.5pt !important;
+    color: #0f172a !important;
+  }
+
+  th {
+    background-color: #f1f5f9 !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+  }
+
+  /* Cards & Modals in print mode */
+  [role="dialog"] {
+    position: static !important;
+    inset: auto !important;
+    transform: none !important;
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    padding: 16px !important;
+    box-shadow: none !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  /* Page Break Rules */
+  tr,
+  .print-card,
+  .break-inside-avoid {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+    color: #0f172a !important;
+  }
+
+  /* Printable Header Block */
+  .print-header {
+    display: block !important;
+    border-bottom: 2px solid #0f172a !important;
+    padding-bottom: 8px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .print-header h1 {
+    font-size: 16pt !important;
+    font-weight: 800 !important;
+    margin: 0 !important;
+  }
+
+  .print-header p {
+    font-size: 9.5pt !important;
+    color: #475569 !important;
+    margin: 2px 0 0 0 !important;
+  }
+}
