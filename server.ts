@@ -1,6 +1,7 @@
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
+import { exec } from 'child_process';
 import compression from 'compression';
 import https from 'https';
 import { GoogleGenAI } from '@google/genai';
@@ -3577,46 +3578,76 @@ app.get('/api/cloudflare-tunnel', (req, res) => {
 // POST Start/Set Cloudflare Tunnel
 app.post('/api/cloudflare-tunnel', (req, res) => {
   const { url } = req.body;
-  let targetUrl = url;
-  if (!targetUrl) {
-    const randomSubdomain = 'gt-calgary-' + Math.random().toString(36).substring(2, 7);
-    targetUrl = `https://${randomSubdomain}.trycloudflare.com`;
+  if (url) {
+    try {
+      fs.writeFileSync('.cloudflare_url', url.trim(), 'utf8');
+      return res.json({
+        success: true,
+        active: true,
+        url: url.trim(),
+        message: 'Manual TryCloudflare tunnel URL set successfully.'
+      });
+    } catch (err: any) {
+      return res.status(500).json({
+        success: false,
+        error: err.message || 'Failed to save TryCloudflare URL.'
+      });
+    }
   }
-  
-  try {
-    fs.writeFileSync('.cloudflare_url', targetUrl.trim(), 'utf8');
-    res.json({
-      success: true,
-      active: true,
-      url: targetUrl.trim(),
-      message: 'TryCloudflare tunnel URL activated successfully.'
-    });
-  } catch (err: any) {
-    res.status(500).json({
-      success: false,
-      error: err.message || 'Failed to save TryCloudflare URL.'
-    });
-  }
+
+  // Execute the master bash script to spawn a real cloudflared tunnel
+  exec('./run.sh tunnel-start', (error, stdout, stderr) => {
+    if (error) {
+      console.error('Failed to start TryCloudflare via run.sh:', error);
+      return res.status(500).json({
+        success: false,
+        error: error.message,
+        stderr: stderr
+      });
+    }
+
+    try {
+      if (fs.existsSync('.cloudflare_url')) {
+        const tunnelUrl = fs.readFileSync('.cloudflare_url', 'utf8').trim();
+        return res.json({
+          success: true,
+          active: true,
+          url: tunnelUrl,
+          message: 'TryCloudflare tunnel started successfully via bash script.'
+        });
+      } else {
+        return res.status(500).json({
+          success: false,
+          error: 'Tunnel script ran but .cloudflare_url file was not created.'
+        });
+      }
+    } catch (err: any) {
+      return res.status(500).json({
+        success: false,
+        error: err.message || 'Failed to read generated tunnel URL.'
+      });
+    }
+  });
 });
 
 // POST Stop Cloudflare Tunnel
 app.post('/api/cloudflare-tunnel/stop', (req, res) => {
-  try {
-    if (fs.existsSync('.cloudflare_url')) {
-      fs.unlinkSync('.cloudflare_url');
+  exec('./run.sh tunnel-stop', (error, stdout, stderr) => {
+    if (error) {
+      console.error('Failed to stop TryCloudflare via run.sh:', error);
+      return res.status(500).json({
+        success: false,
+        error: error.message,
+        stderr: stderr
+      });
     }
-    res.json({
+    return res.json({
       success: true,
       active: false,
       url: '',
-      message: 'TryCloudflare tunnel URL stopped/removed successfully.'
+      message: 'TryCloudflare tunnel stopped successfully via bash script.'
     });
-  } catch (err: any) {
-    res.status(500).json({
-      success: false,
-      error: err.message || 'Failed to remove TryCloudflare URL.'
-    });
-  }
+  });
 });
 
 

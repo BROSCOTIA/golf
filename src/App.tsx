@@ -499,7 +499,7 @@ export default function App() {
     }, 2000);
   };
 
-  // Sync customers from/to backend on load
+  // Sync customers from/to backend on load & poll cloudflare tunnel status
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
@@ -517,6 +517,13 @@ export default function App() {
     
     fetchCustomers();
     fetchTunnelStatus();
+
+    // Poll tunnel status every 5 seconds for real-time synchronization with Telegram bot triggers
+    const tunnelInterval = setInterval(() => {
+      fetchTunnelStatus();
+    }, 5000);
+
+    return () => clearInterval(tunnelInterval);
   }, []);
 
   const handleSaveStores = (newStores: StoreLocation[]) => {

@@ -149,7 +149,72 @@ cmd_stop() {
     pkill -f 'node dist/server.cjs' 2>/dev/null || true
     pkill -f 'tsx server.ts' 2>/dev/null || true
     pkill -f 'vite' 2>/dev/null || true
+    pkill -f 'cloudflared tunnel' 2>/dev/null || true
+    rm -f .cloudflare_url .cloudflare_log 2>/dev/null
     ok "Services stopped."
+}
+
+cmd_tunnel_start() {
+    info "Preparing TryCloudflare Tunnel..."
+    local CLOUDFLARED_BIN="./cloudflared"
+    
+    # 1. Check if cloudflared exists, if not, download it
+    if ! command -v cloudflared &>/dev/null; then
+        if [[ ! -f "$CLOUDFLARED_BIN" ]]; then
+            info "Downloading cloudflared binary for Linux..."
+            local ARCH=$(uname -m)
+            local URL="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64"
+            if [[ "$ARCH" == "aarch64" || "$ARCH" == "arm64" ]]; then
+                URL="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64"
+            fi
+            
+            if curl -L -f -s "$URL" -o "$CLOUDFLARED_BIN"; then
+                chmod +x "$CLOUDFLARED_BIN"
+                ok "Downloaded and configured cloudflared."
+            else
+                fail "Failed to download cloudflared binary."
+                exit 1
+            fi
+        fi
+    else
+        CLOUDFLARED_BIN="cloudflared"
+    fi
+
+    # 2. Kill any existing tunnel first
+    pkill -f "cloudflared tunnel" &>/dev/null || true
+    rm -f .cloudflare_url .cloudflare_log 2>/dev/null
+
+    # 3. Launch cloudflared tunnel pointing at the local app URL
+    info "Starting TryCloudflare tunnel for http://127.0.0.1:${PORT}..."
+    nohup "$CLOUDFLARED_BIN" tunnel --url "http://127.0.0.1:${PORT}" > .cloudflare_log 2>&1 &
+    
+    # 4. Wait & extract the assigned .trycloudflare.com URL from logs
+    local count=0
+    local max_wait=20
+    local found_url=""
+    
+    while [[ $count -lt $max_wait ]]; do
+        sleep 1
+        if [[ -f .cloudflare_log ]]; then
+            found_url=$(grep -o -E 'https://[a-zA-Z0-9-]+\.trycloudflare\.com' .cloudflare_log | head -n 1)
+            if [[ -n "$found_url" ]]; then
+                echo -n "$found_url" > .cloudflare_url
+                ok "TryCloudflare Tunnel is live: ${CBGRN}${found_url}${CRESET}"
+                return 0
+            fi
+        fi
+        count=$((count + 1))
+    done
+
+    fail "Tunnel started but failed to retrieve public trycloudflare URL within ${max_wait}s."
+    exit 1
+}
+
+cmd_tunnel_stop() {
+    info "Stopping TryCloudflare Tunnel..."
+    pkill -f "cloudflared tunnel" &>/dev/null || true
+    rm -f .cloudflare_url .cloudflare_log 2>/dev/null
+    ok "TryCloudflare Tunnel stopped and cleaned up."
 }
 
 # =============================================================================
@@ -164,13 +229,15 @@ main() {
         build|--build) cmd_build ;;
         status) cmd_status ;;
         stop|kill) cmd_stop ;;
+        tunnel-start) cmd_tunnel_start ;;
+        tunnel-stop) cmd_tunnel_stop ;;
         restart)
             cmd_stop
             sleep 1
             cmd_start
             ;;
         help|--help|-h)
-            echo "Usage: ./${SCRIPT_NAME} [start|build|status|stop|restart|help]"
+            echo "Usage: ./${SCRIPT_NAME} [start|build|status|stop|tunnel-start|tunnel-stop|restart|help]"
             ;;
         *)
             fail "Unknown command: ${1}"
