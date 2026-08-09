@@ -32,7 +32,29 @@ app.use((req, res, next) => {
   next();
 });
 
-let backendCustomers = [...INITIAL_CUSTOMERS];
+const CUSTOMERS_FILE = path.join(process.cwd(), 'customers.json');
+
+function loadCustomers() {
+  try {
+    if (fs.existsSync(CUSTOMERS_FILE)) {
+      const data = fs.readFileSync(CUSTOMERS_FILE, 'utf8');
+      return JSON.parse(data);
+    }
+  } catch (err) {
+    console.error('Failed to load customers from file:', err);
+  }
+  return [...INITIAL_CUSTOMERS];
+}
+
+function saveCustomers(customers: any[]) {
+  try {
+    fs.writeFileSync(CUSTOMERS_FILE, JSON.stringify(customers, null, 2), 'utf8');
+  } catch (err) {
+    console.error('Failed to save customers to file:', err);
+  }
+}
+
+let backendCustomers = loadCustomers();
 
 app.get('/api/customers', (req, res) => {
   res.json({ success: true, count: backendCustomers.length, customers: backendCustomers });
@@ -42,6 +64,7 @@ app.post('/api/customers', (req, res) => {
   const { customers } = req.body;
   if (Array.isArray(customers)) {
     backendCustomers = customers;
+    saveCustomers(backendCustomers);
     return res.json({ success: true, count: backendCustomers.length });
   }
   return res.status(400).json({ error: 'Invalid customers array' });

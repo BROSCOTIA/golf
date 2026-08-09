@@ -436,15 +436,23 @@ export default function App() {
     }, 2000);
   };
 
-  // Sync customers to backend on load
+  // Sync customers from/to backend on load
   useEffect(() => {
-    if (customers && customers.length > 0) {
-      fetch('/api/customers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ customers })
-      }).catch(err => console.error('Initial sync failed:', err));
-    }
+    const fetchCustomers = async () => {
+      try {
+        const res = await fetch('/api/customers');
+        const data = await res.json();
+        if (data.success && data.customers) {
+          const sanitized = sanitizeCustomerRecords(data.customers);
+          setCustomers(sanitized);
+          safeStorage.setItem('multi_store_customers', JSON.stringify(sanitized));
+        }
+      } catch (err) {
+        console.error('Failed to fetch customers from server:', err);
+      }
+    };
+    
+    fetchCustomers();
   }, []);
 
   const handleSaveStores = (newStores: StoreLocation[]) => {
@@ -608,13 +616,30 @@ export default function App() {
       handleSaveStores(mergedStores);
     }
 
-    const combined = [...newRecords, ...customers];
-    handleSaveCustomers(combined);
-    if (newRecords.length > 0 && newRecords[0].storeId) {
-      setSelectedStoreId(newRecords[0].storeId);
+    // Deduplication logic using custId
+    const existingCustIds = new Set(customers.map(c => c.custId));
+    const trulyNewRecords = newRecords.filter(r => !existingCustIds.has(r.custId));
+    const duplicateCount = newRecords.length - trulyNewRecords.length;
+
+    if (trulyNewRecords.length === 0 && duplicateCount > 0) {
+      alert(`All ${duplicateCount} records in this import already exist in the database and were skipped.`);
+      return;
     }
-    setAiMessage(`Successfully imported ${newRecords.length} records across Golf Town store sheets!`);
-    setTimeout(() => setAiMessage(''), 5000);
+
+    const combined = [...trulyNewRecords, ...customers];
+    handleSaveCustomers(combined);
+    
+    if (trulyNewRecords.length > 0 && trulyNewRecords[0].storeId) {
+      setSelectedStoreId(trulyNewRecords[0].storeId);
+    }
+
+    let msg = `Successfully imported ${trulyNewRecords.length} new records!`;
+    if (duplicateCount > 0) {
+      msg += ` (${duplicateCount} duplicates were skipped).`;
+    }
+    
+    setAiMessage(msg);
+    setTimeout(() => setAiMessage(''), 6000);
   };
 
   // Batch AI Name Explanation Generator
