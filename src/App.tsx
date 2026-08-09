@@ -16,6 +16,7 @@ import { LiveSocketAdminModal } from './components/LiveSocketAdminModal';
 import { AutomatedAlertsModal } from './components/AutomatedAlertsModal';
 import { StoreCreditAnalyticsModal } from './components/StoreCreditAnalyticsModal';
 import { CustomReceiptRefundModal } from './components/CustomReceiptRefundModal';
+import { AdvancedNotificationWorkflowModal } from './components/AdvancedNotificationWorkflowModal';
 import { 
   Users, 
   Search, 
@@ -203,6 +204,7 @@ export default function App() {
   const [isAutomatedAlertsModalOpen, setIsAutomatedAlertsModalOpen] = useState(false);
   const [isAnalyticsModalOpen, setIsAnalyticsModalOpen] = useState(false);
   const [isCustomReceiptModalOpen, setIsCustomReceiptModalOpen] = useState(false);
+  const [isAdvancedOpsOpen, setIsAdvancedOpsOpen] = useState(false);
 
   const [sendingEmailId, setSendingEmailId] = useState<string | null>(null);
 
@@ -257,6 +259,10 @@ export default function App() {
           setIsCustomReceiptModalOpen(false);
           return;
         }
+        if (isAdvancedOpsOpen) {
+          setIsAdvancedOpsOpen(false);
+          return;
+        }
         if (isMenuOpen) {
           setIsMenuOpen(false);
           return;
@@ -299,6 +305,7 @@ export default function App() {
     isAutomatedAlertsModalOpen,
     isAnalyticsModalOpen,
     isCustomReceiptModalOpen,
+    isAdvancedOpsOpen,
     isMenuOpen
   ]);
 
@@ -423,6 +430,9 @@ export default function App() {
   const fetchTunnelStatus = async () => {
     try {
       const res = await fetch('/api/cloudflare-tunnel');
+      if (!res.ok) {
+        throw new Error(`Server returned ${res.status}`);
+      }
       const data = await res.json();
       if (data.success) {
         setTunnelActive(data.active);
@@ -1121,6 +1131,15 @@ export default function App() {
               >
                 <Plus className="w-4 h-4" />
                 <span>Add Customer</span>
+              </button>
+
+              <button
+                onClick={() => setIsAdvancedOpsOpen(true)}
+                className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer border border-slate-700"
+                title="Open Advanced Operations, Notes, SMS & Emails Center"
+              >
+                <Sparkles className="w-4 h-4 text-emerald-400 animate-pulse" />
+                <span>Advanced Hub</span>
               </button>
 
               <button
@@ -2254,6 +2273,15 @@ export default function App() {
         isOpen={isCustomReceiptModalOpen}
         onClose={() => setIsCustomReceiptModalOpen(false)}
         customers={customers}
+      />
+
+      {/* Operations & Advanced Comms Hub Modal */}
+      <AdvancedNotificationWorkflowModal
+        isOpen={isAdvancedOpsOpen}
+        onClose={() => setIsAdvancedOpsOpen(false)}
+        customers={customers}
+        onUpdateCustomers={handleSaveCustomers}
+        stores={stores}
       />
 
       {/* Floating Batch Action Bar */}

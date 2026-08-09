@@ -106,6 +106,9 @@ cmd_start() {
         npm install --no-audit --no-fund --legacy-peer-deps
     fi
 
+    # Launch TryCloudflare tunnel before starting server.ts / dev server
+    cmd_tunnel_start || true
+
     if [[ "${NODE_ENV}" == "production" ]]; then
         if [[ ! -f "${SCRIPT_DIR}/dist/server.cjs" ]]; then
             info "Production bundle not found. Building..."
