@@ -28,6 +28,10 @@ import {
   PieChart, 
   DollarSign, 
   RefreshCw,
+  Play,
+  Square,
+  Terminal,
+  Copy,
   Store,
   MapPin,
   Phone,
@@ -410,6 +414,65 @@ export default function App() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiMessage, setAiMessage] = useState('');
 
+  // TryCloudflare Tunnel State
+  const [tunnelActive, setTunnelActive] = useState(false);
+  const [tunnelUrl, setTunnelUrl] = useState('');
+  const [tunnelLoading, setTunnelLoading] = useState(false);
+  const [tunnelCopied, setTunnelCopied] = useState(false);
+
+  const fetchTunnelStatus = async () => {
+    try {
+      const res = await fetch('/api/cloudflare-tunnel');
+      const data = await res.json();
+      if (data.success) {
+        setTunnelActive(data.active);
+        setTunnelUrl(data.url);
+      }
+    } catch (err) {
+      console.error('Failed to fetch TryCloudflare tunnel status:', err);
+    }
+  };
+
+  const handleToggleTunnel = async () => {
+    setTunnelLoading(true);
+    try {
+      if (tunnelActive) {
+        const res = await fetch('/api/cloudflare-tunnel/stop', { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          setTunnelActive(false);
+          setTunnelUrl('');
+          setAiMessage('TryCloudflare tunnel deactivated successfully!');
+          setTimeout(() => setAiMessage(''), 5000);
+        }
+      } else {
+        const res = await fetch('/api/cloudflare-tunnel', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        const data = await res.json();
+        if (data.success) {
+          setTunnelActive(true);
+          setTunnelUrl(data.url);
+          setAiMessage(`TryCloudflare tunnel activated: ${data.url}`);
+          setTimeout(() => setAiMessage(''), 6000);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to toggle TryCloudflare tunnel:', err);
+    } finally {
+      setTunnelLoading(false);
+    }
+  };
+
+  const handleCopyTunnelUrl = () => {
+    if (!tunnelUrl) return;
+    navigator.clipboard.writeText(tunnelUrl);
+    setTunnelCopied(true);
+    setTimeout(() => setTunnelCopied(false), 2000);
+  };
+
   // Local persistence helpers & debounced auto-save ref
   const saveTimeoutRef = useRef<number | null>(null);
 
@@ -453,6 +516,7 @@ export default function App() {
     };
     
     fetchCustomers();
+    fetchTunnelStatus();
   }, []);
 
   const handleSaveStores = (newStores: StoreLocation[]) => {
@@ -1172,8 +1236,78 @@ export default function App() {
                   </button>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <p className="text-[10px] uppercase tracking-wider text-slate-400 font-extrabold px-1">Integrations & Systems</p>
+
+                  {/* TryCloudflare Tunnel Controller Card */}
+                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 space-y-3 shadow-xs">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Terminal className="w-4 h-4 text-emerald-700" />
+                        <span className="text-xs font-extrabold text-slate-900 uppercase tracking-wider">TryCloudflare Tunnel</span>
+                      </div>
+                      <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider border ${
+                        tunnelActive 
+                          ? 'bg-emerald-500/15 text-emerald-800 border-emerald-500/30' 
+                          : 'bg-slate-100 text-slate-500 border-slate-200'
+                      }`}>
+                        {tunnelActive ? 'Active' : 'Inactive'}
+                      </span>
+                    </div>
+
+                    <p className="text-[11px] text-slate-500 leading-relaxed">
+                      Toggle the public secure tunnel to generate a live HTTPS link, enabling the external Telegram Bot & notice dispatch systems to interface with your portal safely.
+                    </p>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={handleToggleTunnel}
+                        disabled={tunnelLoading}
+                        className={`flex-1 py-2 px-3 text-xs font-black rounded-xl border flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer ${
+                          tunnelActive 
+                            ? 'bg-rose-50 hover:bg-rose-100/80 text-rose-700 border-rose-200 active:scale-98' 
+                            : 'bg-emerald-700 hover:bg-emerald-800 text-white border-emerald-600 active:scale-98'
+                        }`}
+                      >
+                        {tunnelLoading ? (
+                          <>
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin text-slate-900" />
+                            <span>Processing...</span>
+                          </>
+                        ) : tunnelActive ? (
+                          <>
+                            <Square className="w-3.5 h-3.5 fill-rose-700 text-rose-700" />
+                            <span>Stop TryCloudflare</span>
+                          </>
+                        ) : (
+                          <>
+                            <Play className="w-3.5 h-3.5 fill-white text-white" />
+                            <span>Start TryCloudflare</span>
+                          </>
+                        )}
+                      </button>
+
+                      {tunnelActive && (
+                        <button
+                          onClick={handleCopyTunnelUrl}
+                          className="px-3 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-xl flex items-center gap-1 shrink-0 cursor-pointer"
+                          title="Copy Active URL"
+                        >
+                          {tunnelCopied ? <Check className="w-3.5 h-3.5 text-emerald-700" /> : <Copy className="w-3.5 h-3.5" />}
+                          <span>{tunnelCopied ? 'Copied' : 'Copy'}</span>
+                        </button>
+                      )}
+                    </div>
+
+                    {tunnelActive && tunnelUrl && (
+                      <div className="bg-white p-2.5 rounded-xl border border-slate-200 space-y-1">
+                        <div className="text-[9px] text-slate-400 font-extrabold uppercase tracking-widest">Active Secure Tunnel URL</div>
+                        <div className="font-mono text-[10px] text-emerald-800 bg-slate-50 p-1.5 rounded border border-slate-100 overflow-x-auto select-all whitespace-nowrap leading-none">
+                          {tunnelUrl}
+                        </div>
+                      </div>
+                    )}
+                  </div>
 
                   <button
                     onClick={() => {

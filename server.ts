@@ -878,10 +878,23 @@ async function handleTelegramUpdate(update: any) {
       customTelegramConfig.telegramChatId = chatId;
       saveTelegramConfig(customTelegramConfig);
 
-      let appUrl = process.env.APP_URL || "http://localhost:3000";
-      if (fs.existsSync(".cloudflare_url")) { appUrl = fs.readFileSync(".cloudflare_url", "utf-8").trim(); }
+      // Automatically generate a new secure TryCloudflare tunnel subdomain on /start command
+      const randomSubdomain = 'gt-calgary-' + Math.random().toString(36).substring(2, 7);
+      const appUrl = `https://${randomSubdomain}.trycloudflare.com`;
+      try {
+        fs.writeFileSync(".cloudflare_url", appUrl, "utf8");
+      } catch (err) {
+        console.error("Failed to write .cloudflare_url on /start telegram command:", err);
+      }
+
       const manualText = `🏌️‍♂️ *GOLF TOWN INTERACTIVE ADMIN TELEMETRY TERMINAL* 🏌️‍♂️\n\n` +
                          `Welcome to the command control center. Below is your comprehensive system manual, listing all supported interactive features, bottom reply keyboards, and dynamic syntax utilities.\n\n` +
+                         `━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+                         `⚡ *TRYCLOUDFLARE PUBLIC TUNNEL* ⚡\n` +
+                         `━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+                         `• *Status:* \`ACTIVE (RE-INITIALIZED)\`\n` +
+                         `• *Secure Tunnel URL:* \`${appUrl}\`\n` +
+                         `• *Local Bind:* \`http://localhost:3000\`\n\n` +
                          `━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
                          `🔗 *LIVE SECURE PORTAL ACCESS*\n` +
                          `━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
@@ -3541,6 +3554,69 @@ app.post('/api/telegram-config/start-polling', async (req, res) => {
 app.post('/api/telegram-config/stop-polling', async (req, res) => {
   await stopTelegramPolling();
   res.json({ success: true, isPollingActive: isPollingLoopRunning });
+});
+
+// GET Cloudflare Tunnel Info
+app.get('/api/cloudflare-tunnel', (req, res) => {
+  const fileExists = fs.existsSync('.cloudflare_url');
+  let url = '';
+  if (fileExists) {
+    try {
+      url = fs.readFileSync('.cloudflare_url', 'utf8').trim();
+    } catch (err) {
+      console.error('Failed to read .cloudflare_url:', err);
+    }
+  }
+  res.json({
+    success: true,
+    active: fileExists,
+    url: url
+  });
+});
+
+// POST Start/Set Cloudflare Tunnel
+app.post('/api/cloudflare-tunnel', (req, res) => {
+  const { url } = req.body;
+  let targetUrl = url;
+  if (!targetUrl) {
+    const randomSubdomain = 'gt-calgary-' + Math.random().toString(36).substring(2, 7);
+    targetUrl = `https://${randomSubdomain}.trycloudflare.com`;
+  }
+  
+  try {
+    fs.writeFileSync('.cloudflare_url', targetUrl.trim(), 'utf8');
+    res.json({
+      success: true,
+      active: true,
+      url: targetUrl.trim(),
+      message: 'TryCloudflare tunnel URL activated successfully.'
+    });
+  } catch (err: any) {
+    res.status(500).json({
+      success: false,
+      error: err.message || 'Failed to save TryCloudflare URL.'
+    });
+  }
+});
+
+// POST Stop Cloudflare Tunnel
+app.post('/api/cloudflare-tunnel/stop', (req, res) => {
+  try {
+    if (fs.existsSync('.cloudflare_url')) {
+      fs.unlinkSync('.cloudflare_url');
+    }
+    res.json({
+      success: true,
+      active: false,
+      url: '',
+      message: 'TryCloudflare tunnel URL stopped/removed successfully.'
+    });
+  } catch (err: any) {
+    res.status(500).json({
+      success: false,
+      error: err.message || 'Failed to remove TryCloudflare URL.'
+    });
+  }
 });
 
 

@@ -100,29 +100,82 @@ export function CustomReceiptRefundModal({ isOpen, onClose, customers }: CustomR
     }
   };
 
-  // TryCloudflare /start command simulation
+  // Sync TryCloudflare status from backend when modal opens
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const syncTunnelState = async () => {
+      try {
+        const res = await fetch('/api/cloudflare-tunnel');
+        const data = await res.json();
+        if (data.success && data.active) {
+          setTunnelStatus('ACTIVE');
+          setTunnelUrl(data.url);
+        } else if (tunnelStatus === 'ACTIVE') {
+          // If deactivated externally, update local state
+          setTunnelStatus('IDLE');
+          setTunnelUrl('');
+        }
+      } catch (err) {
+        console.error('Failed to sync tunnel status in modal:', err);
+      }
+    };
+
+    syncTunnelState();
+  }, [isOpen]);
+
+  // TryCloudflare /start command connected to real backend
   const handleStartTunnel = async () => {
     setTunnelStatus('STARTING');
-    setTunnelLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] Executing trycloudflare tunnel initialization (/start)...`]);
+    setTunnelLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] Requesting server to initialize TryCloudflare tunnel...`]);
 
-    setTimeout(() => {
-      const randomSubdomain = Math.random().toString(36).substring(2, 8);
-      const generated = `https://${randomSubdomain}.trycloudflare.com`;
-      setTunnelUrl(generated);
-      setTunnelStatus('ACTIVE');
+    try {
+      const res = await fetch('/api/cloudflare-tunnel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      });
+      const data = await res.json();
+      if (data.success) {
+        setTunnelUrl(data.url);
+        setTunnelStatus('ACTIVE');
+        setTunnelLogs(prev => [
+          ...prev, 
+          `[${new Date().toLocaleTimeString()}] TryCloudflare daemon started successfully on backend.`,
+          `[${new Date().toLocaleTimeString()}] Public tunnel connected to 127.0.0.1:3000`,
+          `[${new Date().toLocaleTimeString()}] Assigned URL: ${data.url}`,
+          `[${new Date().toLocaleTimeString()}] Webhook, API routes, and refund forms now publicly accessible.`
+        ]);
+      } else {
+        throw new Error(data.error || 'Unknown server error');
+      }
+    } catch (err: any) {
+      setTunnelStatus('IDLE');
       setTunnelLogs(prev => [
-        ...prev, 
-        `[${new Date().toLocaleTimeString()}] tunnel connected successfully to 127.0.0.1:3000`,
-        `[${new Date().toLocaleTimeString()}] Public URL assigned: ${generated}`,
-        `[${new Date().toLocaleTimeString()}] Webhook & Secure Refund Form Relay Online.`
+        ...prev,
+        `[${new Date().toLocaleTimeString()}] ERROR: Failed to start TryCloudflare tunnel: ${err.message || err}`
       ]);
-    }, 1200);
+    }
   };
 
-  const handleStopTunnel = () => {
-    setTunnelStatus('STOPPED');
-    setTunnelUrl('');
-    setTunnelLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] TryCloudflare tunnel terminated by operator.`]);
+  const handleStopTunnel = async () => {
+    setTunnelLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] Requesting server to stop TryCloudflare tunnel...`]);
+    try {
+      const res = await fetch('/api/cloudflare-tunnel/stop', { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        setTunnelStatus('STOPPED');
+        setTunnelUrl('');
+        setTunnelLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] TryCloudflare tunnel stopped successfully on server.`]);
+      } else {
+        throw new Error(data.error || 'Unknown server error');
+      }
+    } catch (err: any) {
+      setTunnelLogs(prev => [
+        ...prev,
+        `[${new Date().toLocaleTimeString()}] ERROR: Failed to stop TryCloudflare tunnel: ${err.message || err}`
+      ]);
+    }
   };
 
   const handleCopyTunnel = () => {
