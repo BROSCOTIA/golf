@@ -107,7 +107,7 @@ cmd_start() {
     fi
 
     # Launch TryCloudflare tunnel before starting server.ts / dev server
-    cmd_tunnel_start || true
+    # cmd_tunnel_start || true
 
     if [[ "${NODE_ENV}" == "production" ]]; then
         if [[ ! -f "${SCRIPT_DIR}/dist/server.cjs" ]]; then
@@ -193,7 +193,7 @@ cmd_tunnel_start() {
     
     # 4. Wait & extract the assigned .trycloudflare.com URL from logs
     local count=0
-    local max_wait=20
+    local max_wait=40
     local found_url=""
     
     while [[ $count -lt $max_wait ]]; do
