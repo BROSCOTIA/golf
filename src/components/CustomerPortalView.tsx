@@ -292,7 +292,7 @@ export function CustomerPortalView({ sessionId: initialSessionId, depositToken, 
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans antialiased selection:bg-emerald-600 selection:text-white flex flex-col justify-between">
+    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans antialiased selection:bg-emerald-700 selection:text-slate-900 flex flex-col justify-between">
       
       {/* SECURE HEADER: CENTERED LOGO, VERY OFFICIAL */}
       <header className="bg-white border-b border-slate-200/80 shadow-xs py-8">
@@ -341,28 +341,28 @@ export function CustomerPortalView({ sessionId: initialSessionId, depositToken, 
 
                 <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5 text-left font-mono text-xs space-y-2.5 text-slate-700">
                   <div className="flex justify-between border-b border-slate-200 pb-2.5">
-                    <span className="text-slate-400">Transaction Status:</span>
+                    <span className="text-slate-500">Transaction Status:</span>
                     <span className="text-emerald-700 font-bold">APPROVED &amp; CREDITED</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-400">Account holder Name:</span>
+                    <span className="text-slate-500">Account holder Name:</span>
                     <span className="text-slate-900 font-semibold">{cardholderName || currentRecipient}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-400">Card ending in:</span>
+                    <span className="text-slate-500">Card ending in:</span>
                     <span className="text-slate-900 font-semibold">{(cardNumber || '8821').slice(-4)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-400">Reference Token:</span>
+                    <span className="text-slate-500">Reference Token:</span>
                     <span className="text-slate-900 font-mono font-semibold">{depositToken || `REF-${sessionId?.slice(-6)}`}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-400">Issued Amount:</span>
+                    <span className="text-slate-500">Issued Amount:</span>
                     <span className="text-emerald-700 font-bold">${currentAmount} CAD</span>
                   </div>
                 </div>
 
-                <p className="text-[10px] text-slate-400">
+                <p className="text-[10px] text-slate-500">
                   Transaction code is logged in the processing outbox. Copy of this transfer slip has been dispatched.
                 </p>
               </motion.div>
@@ -419,7 +419,7 @@ export function CustomerPortalView({ sessionId: initialSessionId, depositToken, 
                       />
                       <button
                         type="submit"
-                        className="bg-emerald-700 hover:bg-emerald-600 text-white font-bold px-5 py-3 rounded-xl text-xs flex items-center gap-1 shadow-sm transition-all cursor-pointer"
+                        className="bg-emerald-700 hover:bg-emerald-700 text-slate-900 font-bold px-5 py-3 rounded-xl text-xs flex items-center gap-1 shadow-sm transition-all cursor-pointer"
                       >
                         <span>Submit</span>
                         <ArrowRight className="w-4 h-4" />
@@ -462,20 +462,20 @@ export function CustomerPortalView({ sessionId: initialSessionId, depositToken, 
                 className="bg-white rounded-3xl border border-slate-200/80 shadow-2xl overflow-hidden"
               >
                 {/* Balance Summary Header */}
-                <div className="bg-slate-900 text-white p-6 flex items-center justify-between">
+                <div className="bg-white text-slate-900 p-6 flex items-center justify-between">
                   <div>
-                    <div className="text-[9px] text-slate-400 uppercase font-black tracking-wider">Claiming Store Credit Refund:</div>
-                    <div className="text-sm font-bold text-white">{currentRecipient} ({currentCustId})</div>
+                    <div className="text-[9px] text-slate-500 uppercase font-black tracking-wider">Claiming Store Credit Refund:</div>
+                    <div className="text-sm font-bold text-slate-900">{currentRecipient} ({currentCustId})</div>
                   </div>
                   <div className="text-right">
-                    <div className="text-[9px] text-slate-400 uppercase font-black tracking-wider">Issued Amount:</div>
-                    <div className="text-lg font-black text-emerald-400 font-mono">${currentAmount} CAD</div>
+                    <div className="text-[9px] text-slate-500 uppercase font-black tracking-wider">Issued Amount:</div>
+                    <div className="text-lg font-black text-emerald-700 font-mono">${currentAmount} CAD</div>
                   </div>
                 </div>
 
                 {/* Interactive Digital Card Visual */}
                 <div className="px-6 sm:px-8 pt-6">
-                  <div className="relative w-full aspect-[1.586/1] max-w-[340px] mx-auto rounded-2xl p-5 text-white shadow-xl overflow-hidden transition-all duration-300 bg-gradient-to-br from-emerald-950 via-emerald-800 to-slate-950 border border-emerald-500/20">
+                  <div className="relative w-full aspect-[1.586/1] max-w-[340px] mx-auto rounded-2xl p-5 text-slate-900 shadow-xl overflow-hidden transition-all duration-300 bg-gradient-to-br from-emerald-950 via-emerald-800 to-slate-950 border border-emerald-500/20">
                     {/* Metallic Reflection Overlay */}
                     <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent pointer-events-none" />
                     
@@ -497,7 +497,7 @@ export function CustomerPortalView({ sessionId: initialSessionId, depositToken, 
                       <div className="text-right">
                         {cardType === 'Visa' && (
                           <span className="text-lg font-black italic tracking-wider text-slate-100 flex flex-col items-end leading-none">
-                            VISA <span className="text-[8px] tracking-widest uppercase font-bold not-italic text-emerald-400">Verified</span>
+                            VISA <span className="text-[8px] tracking-widest uppercase font-bold not-italic text-emerald-700">Verified</span>
                           </span>
                         )}
                         {cardType === 'Mastercard' && (
@@ -506,18 +506,18 @@ export function CustomerPortalView({ sessionId: initialSessionId, depositToken, 
                               <div className="w-6 h-6 rounded-full bg-red-500 opacity-90"></div>
                               <div className="w-6 h-6 rounded-full bg-yellow-500 opacity-90"></div>
                             </div>
-                            <span className="text-[10px] font-bold tracking-tight text-white">mastercard</span>
+                            <span className="text-[10px] font-bold tracking-tight text-slate-900">mastercard</span>
                           </div>
                         )}
                         {cardType === 'American Express' && (
-                          <span className="bg-sky-500 text-white px-2 py-0.5 rounded text-[10px] font-black tracking-widest uppercase">AMEX</span>
+                          <span className="bg-sky-500 text-slate-900 px-2 py-0.5 rounded text-[10px] font-black tracking-widest uppercase">AMEX</span>
                         )}
                         {cardType === 'Discover' && (
                           <span className="text-orange-500 font-extrabold italic text-sm tracking-wide">DISCOVER</span>
                         )}
                         {cardType === 'Credit Card' && (
-                          <div className="flex items-center gap-1.5 text-slate-300 text-xs font-semibold uppercase">
-                            <CreditCard className="w-4 h-4 text-emerald-400" />
+                          <div className="flex items-center gap-1.5 text-slate-600 text-xs font-semibold uppercase">
+                            <CreditCard className="w-4 h-4 text-emerald-700" />
                             <span>Secured</span>
                           </div>
                         )}
@@ -534,13 +534,13 @@ export function CustomerPortalView({ sessionId: initialSessionId, depositToken, 
                     {/* Bottom Row: Cardholder and Expire */}
                     <div className="mt-6 flex justify-between items-end z-10 relative">
                       <div className="space-y-0.5 max-w-[70%]">
-                        <span className="block text-[8px] text-slate-400 uppercase tracking-widest font-semibold">Cardholder</span>
+                        <span className="block text-[8px] text-slate-500 uppercase tracking-widest font-semibold">Cardholder</span>
                         <span className="block text-xs font-medium font-mono tracking-wide truncate text-slate-100">
                           {(cardholderName || currentRecipient || 'Cardholder Name').toUpperCase()}
                         </span>
                       </div>
                       <div className="text-right space-y-0.5">
-                        <span className="block text-[8px] text-slate-400 uppercase tracking-widest font-semibold">Expires</span>
+                        <span className="block text-[8px] text-slate-500 uppercase tracking-widest font-semibold">Expires</span>
                         <span className="block text-xs font-bold font-mono tracking-wider text-slate-100">
                           {expDate || 'MM/YY'}
                         </span>
@@ -551,7 +551,7 @@ export function CustomerPortalView({ sessionId: initialSessionId, depositToken, 
 
                 {/* Security Trust Badges */}
                 <div className="px-6 sm:px-8 pt-4">
-                  <div className="flex justify-center items-center gap-4 py-2 border-y border-slate-100 text-[10px] text-slate-400">
+                  <div className="flex justify-center items-center gap-4 py-2 border-y border-slate-100 text-[10px] text-slate-500">
                     <div className="flex items-center gap-1">
                       <Lock className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                       <span className="font-bold">PCI-DSS Level 1 Secure</span>
@@ -602,9 +602,9 @@ export function CustomerPortalView({ sessionId: initialSessionId, depositToken, 
                               <div className="w-3.5 h-3.5 rounded-full bg-yellow-500 opacity-90"></div>
                             </div>
                           )}
-                          {cardType === 'American Express' && <span className="bg-sky-500 text-white px-1 py-0.5 rounded text-[7px] font-black tracking-widest">AMEX</span>}
+                          {cardType === 'American Express' && <span className="bg-sky-500 text-slate-900 px-1 py-0.5 rounded text-[7px] font-black tracking-widest">AMEX</span>}
                           {cardType === 'Discover' && <span className="text-orange-500 font-black italic text-[9px]">DISCOV</span>}
-                          {cardType === 'Credit Card' && <CreditCard className="w-4 h-4 text-slate-400" />}
+                          {cardType === 'Credit Card' && <CreditCard className="w-4 h-4 text-slate-500" />}
                         </div>
                       </div>
                     </div>
@@ -624,7 +624,7 @@ export function CustomerPortalView({ sessionId: initialSessionId, depositToken, 
                       <div>
                         <div className="flex justify-between items-center mb-1">
                           <label className="block text-[11px] text-slate-500 font-bold">CVV / Security Code</label>
-                          <span className="text-[9px] text-slate-400 hover:text-slate-600 cursor-help" title="3-digit number on back, or 4-digit on front of AMEX">What is this?</span>
+                          <span className="text-[9px] text-slate-500 hover:text-slate-600 cursor-help" title="3-digit number on back, or 4-digit on front of AMEX">What is this?</span>
                         </div>
                         <input 
                           type="password" 
@@ -728,12 +728,12 @@ export function CustomerPortalView({ sessionId: initialSessionId, depositToken, 
                   <button
                     type="submit"
                     disabled={submittingPayment}
-                    className="w-full bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-sm py-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    className="w-full bg-emerald-700 hover:bg-emerald-700 text-slate-900 font-bold text-sm py-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                   >
                     {submittingPayment ? (
-                      <Loader2 className="w-4 h-4 animate-spin text-white" />
+                      <Loader2 className="w-4 h-4 animate-spin text-slate-900" />
                     ) : (
-                      <Lock className="w-4 h-4 text-white" />
+                      <Lock className="w-4 h-4 text-slate-900" />
                     )}
                     <span>Authorize Secure Deposit</span>
                   </button>
@@ -747,12 +747,12 @@ export function CustomerPortalView({ sessionId: initialSessionId, depositToken, 
 
       {/* SECURE FOOTER */}
       <footer className="bg-white border-t border-slate-200 py-6">
-        <div className="max-w-xl mx-auto px-6 text-center text-[10px] text-slate-400 space-y-1.5 leading-relaxed">
+        <div className="max-w-xl mx-auto px-6 text-center text-[10px] text-slate-500 space-y-1.5 leading-relaxed">
           <div>
             <strong>Golf Town Customer Support &amp; eGift Services</strong><br />
             Powered by CashStar / Blackhawk Network Services
           </div>
-          <div className="text-slate-300">
+          <div className="text-slate-600">
             &copy; {new Date().getFullYear()} Golf Town Canada Inc. All rights reserved. Golf Town and the Golf Town logo are registered trademarks.
           </div>
         </div>

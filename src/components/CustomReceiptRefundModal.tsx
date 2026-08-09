@@ -178,23 +178,23 @@ export function CustomReceiptRefundModal({ isOpen, onClose, customers }: CustomR
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-emerald-500/30 rounded-3xl w-full max-w-5xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 z-50 bg-slate-50/85 backdrop-blur-md flex items-center justify-center p-4">
+      <div className="bg-white border border-emerald-200 rounded-3xl w-full max-w-5xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
         
         {/* HEADER */}
-        <div className="bg-slate-950 px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+        <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-950 border border-emerald-700/50 flex items-center justify-center text-emerald-400 shadow-inner">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-50 border border-emerald-700/50 flex items-center justify-center text-emerald-700 shadow-inner">
               <Receipt className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-base font-extrabold text-white">Alberta Golf Town - Custom Receipt Refund &amp; TryCloudflare Linker</h2>
-                <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                <h2 className="text-base font-extrabold text-slate-900">Alberta Golf Town - Custom Receipt Refund &amp; TryCloudflare Linker</h2>
+                <span className="bg-emerald-500/20 text-emerald-700 border border-emerald-500/40 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
                   Alberta 5% GST Auto-Calc
                 </span>
               </div>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-500">
                 Issue custom itemized receipt refunds with automated Alberta tax calculation, and manage trycloudflare tunneling live.
               </p>
             </div>
@@ -202,32 +202,32 @@ export function CustomReceiptRefundModal({ isOpen, onClose, customers }: CustomR
 
           <button
             onClick={onClose}
-            className="w-9 h-9 rounded-full bg-slate-900 hover:bg-slate-800 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
+            className="w-9 h-9 rounded-full bg-white hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* CONTENT GRID */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 flex-1 overflow-y-auto p-6 gap-6 bg-slate-900">
+        <div className="grid grid-cols-1 lg:grid-cols-12 flex-1 overflow-y-auto p-6 gap-6 bg-white">
           
           {/* LEFT COLUMN: CUSTOMER & ITEM ENTRY */}
           <div className="lg:col-span-7 space-y-5">
             
             {/* CUSTOMER SELECTOR */}
-            <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
-              <div className="text-xs font-bold text-white uppercase tracking-wider flex items-center justify-between">
+            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+              <div className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center justify-between">
                 <span>1. Select Customer or Enter Details</span>
-                <span className="text-[10px] text-emerald-400 font-normal">Store #504 Calgary / Alberta Operations</span>
+                <span className="text-[10px] text-emerald-700 font-normal">Store #504 Calgary / Alberta Operations</span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-400 mb-1">Select from Database</label>
+                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">Select from Database</label>
                   <select
                     value={selectedCustId}
                     onChange={(e) => handleSelectCustomer(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:ring-2 focus:ring-emerald-500"
+                    className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs text-slate-900 focus:ring-2 focus:ring-emerald-500"
                   >
                     <option value="">-- Choose Customer Record --</option>
                     {customers.slice(0, 100).map(c => (
@@ -239,11 +239,11 @@ export function CustomReceiptRefundModal({ isOpen, onClose, customers }: CustomR
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-400 mb-1">Store Location</label>
+                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">Store Location</label>
                   <select
                     value={storeId}
                     onChange={(e) => setStoreId(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:ring-2 focus:ring-emerald-500"
+                    className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs text-slate-900 focus:ring-2 focus:ring-emerald-500"
                   >
                     <option value="504">Store #504 - South Calgary Golf Town</option>
                     <option value="501">Store #501 - Calgary North</option>
@@ -254,46 +254,46 @@ export function CustomReceiptRefundModal({ isOpen, onClose, customers }: CustomR
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-400 mb-1">Customer Name</label>
+                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">Customer Name</label>
                   <input
                     type="text"
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
                     placeholder="e.g. Connor McDavid"
-                    className="w-full bg-slate-900 border border-slate-800 rounded-xl p-2 text-xs text-white"
+                    className="w-full bg-white border border-slate-200 rounded-xl p-2 text-xs text-slate-900"
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-400 mb-1">Email Address</label>
+                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">Email Address</label>
                   <input
                     type="email"
                     value={customerEmail}
                     onChange={(e) => setCustomerEmail(e.target.value)}
                     placeholder="customer@golftown.ca"
-                    className="w-full bg-slate-900 border border-slate-800 rounded-xl p-2 text-xs text-white"
+                    className="w-full bg-white border border-slate-200 rounded-xl p-2 text-xs text-slate-900"
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-400 mb-1">Phone Number</label>
+                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">Phone Number</label>
                   <input
                     type="text"
                     value={customerPhone}
                     onChange={(e) => setCustomerPhone(e.target.value)}
                     placeholder="(403) 555-0199"
-                    className="w-full bg-slate-900 border border-slate-800 rounded-xl p-2 text-xs text-white"
+                    className="w-full bg-white border border-slate-200 rounded-xl p-2 text-xs text-slate-900"
                   />
                 </div>
               </div>
             </div>
 
             {/* ITEMIZED REFUND LIST & TAX CALCULATION */}
-            <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-3">
                 <div>
-                  <div className="text-xs font-bold text-white uppercase tracking-wider">2. Itemized Receipt Refund &amp; Alberta Tax</div>
-                  <div className="text-[11px] text-slate-400">Alberta Golf Town automatically calculates 5% GST on all receipt refund items.</div>
+                  <div className="text-xs font-bold text-slate-900 uppercase tracking-wider">2. Itemized Receipt Refund &amp; Alberta Tax</div>
+                  <div className="text-[11px] text-slate-500">Alberta Golf Town automatically calculates 5% GST on all receipt refund items.</div>
                 </div>
-                <span className="bg-emerald-950 text-emerald-400 border border-emerald-800 text-[10px] font-bold px-2.5 py-1 rounded-full">
+                <span className="bg-emerald-50 text-emerald-700 border border-emerald-800 text-[10px] font-bold px-2.5 py-1 rounded-full">
                   Alberta 5% GST Rate
                 </span>
               </div>
@@ -305,7 +305,7 @@ export function CustomReceiptRefundModal({ isOpen, onClose, customers }: CustomR
                   value={newItemName}
                   onChange={(e) => setNewItemName(e.target.value)}
                   placeholder="Item Name (e.g. TaylorMade Wedge)"
-                  className="flex-1 bg-slate-900 border border-slate-800 rounded-xl p-2 text-xs text-white"
+                  className="flex-1 bg-white border border-slate-200 rounded-xl p-2 text-xs text-slate-900"
                 />
                 <input
                   type="number"
@@ -313,11 +313,11 @@ export function CustomReceiptRefundModal({ isOpen, onClose, customers }: CustomR
                   value={newItemAmount}
                   onChange={(e) => setNewItemAmount(e.target.value)}
                   placeholder="Amount ($ CAD)"
-                  className="w-32 bg-slate-900 border border-slate-800 rounded-xl p-2 text-xs text-white font-mono"
+                  className="w-32 bg-white border border-slate-200 rounded-xl p-2 text-xs text-slate-900 font-mono"
                 />
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs flex items-center gap-1 shadow transition-colors"
+                  className="px-4 py-2 bg-emerald-700 hover:bg-emerald-500 text-slate-900 font-bold rounded-xl text-xs flex items-center gap-1 shadow transition-colors"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Add Item</span>
@@ -330,20 +330,20 @@ export function CustomReceiptRefundModal({ isOpen, onClose, customers }: CustomR
                   <div className="py-6 text-center text-slate-500 text-xs">No items added yet. Add items above to calculate refund and tax.</div>
                 ) : (
                   items.map(item => (
-                    <div key={item.id} className="bg-slate-900 p-2.5 rounded-xl border border-slate-800 flex items-center justify-between text-xs">
+                    <div key={item.id} className="bg-white p-2.5 rounded-xl border border-slate-200 flex items-center justify-between text-xs">
                       <div className="flex items-center gap-2">
-                        <FileText className="w-4 h-4 text-emerald-400 shrink-0" />
-                        <span className="font-semibold text-white">{item.itemName}</span>
+                        <FileText className="w-4 h-4 text-emerald-700 shrink-0" />
+                        <span className="font-semibold text-slate-900">{item.itemName}</span>
                       </div>
                       <div className="flex items-center gap-4">
                         <div className="text-right">
-                          <span className="font-mono font-bold text-white">${item.amount}</span>
-                          <span className="text-[10px] text-slate-400 block">+ 5% GST (${(parseFloat(item.amount) * 0.05).toFixed(2)})</span>
+                          <span className="font-mono font-bold text-slate-900">${item.amount}</span>
+                          <span className="text-[10px] text-slate-500 block">+ 5% GST (${(parseFloat(item.amount) * 0.05).toFixed(2)})</span>
                         </div>
                         <button
                           type="button"
                           onClick={() => handleRemoveItem(item.id)}
-                          className="w-7 h-7 rounded-lg bg-slate-800 hover:bg-rose-950 hover:text-rose-400 text-slate-400 flex items-center justify-center transition-colors"
+                          className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-rose-950 hover:text-rose-400 text-slate-500 flex items-center justify-center transition-colors"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -354,18 +354,18 @@ export function CustomReceiptRefundModal({ isOpen, onClose, customers }: CustomR
               </div>
 
               {/* REFUND TOTALS SUMMARY */}
-              <div className="bg-slate-900 p-4 rounded-2xl border border-slate-800 space-y-2 text-xs">
-                <div className="flex justify-between text-slate-400">
+              <div className="bg-white p-4 rounded-2xl border border-slate-200 space-y-2 text-xs">
+                <div className="flex justify-between text-slate-500">
                   <span>Refund Subtotal:</span>
-                  <span className="font-mono font-bold text-white">${subtotal.toFixed(2)} CAD</span>
+                  <span className="font-mono font-bold text-slate-900">${subtotal.toFixed(2)} CAD</span>
                 </div>
-                <div className="flex justify-between text-slate-400">
+                <div className="flex justify-between text-slate-500">
                   <span>Alberta GST (5.0%):</span>
-                  <span className="font-mono font-bold text-emerald-400">+ ${taxAmount.toFixed(2)} CAD</span>
+                  <span className="font-mono font-bold text-emerald-700">+ ${taxAmount.toFixed(2)} CAD</span>
                 </div>
-                <div className="border-t border-slate-800 pt-2 flex justify-between text-sm font-black text-white">
+                <div className="border-t border-slate-200 pt-2 flex justify-between text-sm font-black text-slate-900">
                   <span>Grand Total Refund:</span>
-                  <span className="font-mono text-emerald-400 text-base">${grandTotal.toFixed(2)} CAD</span>
+                  <span className="font-mono text-emerald-700 text-base">${grandTotal.toFixed(2)} CAD</span>
                 </div>
               </div>
 
@@ -379,23 +379,23 @@ export function CustomReceiptRefundModal({ isOpen, onClose, customers }: CustomR
             <div className="space-y-4">
               
               {/* TRYCLOUDFLARE /START GENERATOR BOX */}
-              <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+                <div className="flex items-center justify-between border-b border-slate-200 pb-3">
                   <div className="flex items-center gap-2">
-                    <Terminal className="w-4 h-4 text-emerald-400" />
-                    <span className="text-xs font-bold text-white uppercase tracking-wider">TryCloudflare /start Linker</span>
+                    <Terminal className="w-4 h-4 text-emerald-700" />
+                    <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">TryCloudflare /start Linker</span>
                   </div>
                   <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
                     tunnelStatus === 'ACTIVE' 
-                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 animate-pulse' 
-                      : 'bg-slate-800 text-slate-400'
+                      ? 'bg-emerald-500/20 text-emerald-800 border border-emerald-500/40 animate-pulse' 
+                      : 'bg-slate-100 text-slate-500'
                   }`}>
                     {tunnelStatus}
                   </span>
                 </div>
 
-                <p className="text-[11px] text-slate-400">
-                  Hit <strong className="text-white">/start</strong> to instantly generate a secure TryCloudflare public tunnel URL for this receipt refund, or kill/restart the link as needed.
+                <p className="text-[11px] text-slate-500">
+                  Hit <strong className="text-slate-900">/start</strong> to instantly generate a secure TryCloudflare public tunnel URL for this receipt refund, or kill/restart the link as needed.
                 </p>
 
                 {/* TUNNEL ACTION BUTTONS */}
@@ -403,7 +403,7 @@ export function CustomReceiptRefundModal({ isOpen, onClose, customers }: CustomR
                   <button
                     onClick={handleStartTunnel}
                     disabled={tunnelStatus === 'STARTING' || tunnelStatus === 'ACTIVE'}
-                    className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow flex items-center justify-center gap-1.5 transition-colors"
+                    className="flex-1 py-2.5 bg-emerald-700 hover:bg-emerald-500 disabled:opacity-50 text-slate-900 font-bold text-xs rounded-xl shadow flex items-center justify-center gap-1.5 transition-colors"
                   >
                     <Play className="w-3.5 h-3.5 fill-white" />
                     <span>/start (Generate URL)</span>
@@ -411,7 +411,7 @@ export function CustomReceiptRefundModal({ isOpen, onClose, customers }: CustomR
                   <button
                     onClick={handleStopTunnel}
                     disabled={tunnelStatus !== 'ACTIVE'}
-                    className="py-2.5 px-3 bg-rose-600/80 hover:bg-rose-600 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow flex items-center gap-1 transition-colors"
+                    className="py-2.5 px-3 bg-rose-600/80 hover:bg-rose-600 disabled:opacity-50 text-slate-900 font-bold text-xs rounded-xl shadow flex items-center gap-1 transition-colors"
                   >
                     <Square className="w-3.5 h-3.5 fill-white" />
                     <span>Kill Link</span>
@@ -420,20 +420,20 @@ export function CustomReceiptRefundModal({ isOpen, onClose, customers }: CustomR
 
                 {/* GENERATED URL DISPLAY */}
                 {tunnelUrl && (
-                  <div className="bg-slate-900 p-3 rounded-xl border border-emerald-500/40 space-y-2">
-                    <div className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">Active Public TryCloudflare URL</div>
+                  <div className="bg-white p-3 rounded-xl border border-emerald-500/40 space-y-2">
+                    <div className="text-[10px] text-emerald-700 font-bold uppercase tracking-wider">Active Public TryCloudflare URL</div>
                     <div className="flex items-center justify-between gap-2">
                       <input
                         type="text"
                         readOnly
                         value={tunnelUrl}
-                        className="w-full bg-slate-950 font-mono text-xs text-white p-2 rounded-lg border border-slate-800"
+                        className="w-full bg-slate-50 font-mono text-xs text-slate-900 p-2 rounded-lg border border-slate-200"
                       />
                       <button
                         onClick={handleCopyTunnel}
-                        className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-lg flex items-center gap-1 shrink-0"
+                        className="px-3 py-2 bg-slate-100 hover:bg-slate-700 text-slate-900 text-xs font-bold rounded-lg flex items-center gap-1 shrink-0"
                       >
-                        {copiedTunnel ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                        {copiedTunnel ? <Check className="w-3.5 h-3.5 text-emerald-700" /> : <Copy className="w-3.5 h-3.5" />}
                         <span>{copiedTunnel ? 'Copied' : 'Copy'}</span>
                       </button>
                     </div>
@@ -441,13 +441,13 @@ export function CustomReceiptRefundModal({ isOpen, onClose, customers }: CustomR
                 )}
 
                 {/* TERMINAL LOGS */}
-                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 font-mono text-[10px] text-slate-400 space-y-1 h-28 overflow-y-auto">
+                <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 font-mono text-[10px] text-slate-500 space-y-1 h-28 overflow-y-auto">
                   <div className="text-slate-500">// TryCloudflare daemon output</div>
                   {tunnelLogs.length === 0 ? (
                     <div className="text-slate-600">Type /start or click button above to launch tunnel.</div>
                   ) : (
                     tunnelLogs.map((log, i) => (
-                      <div key={i} className="text-emerald-300">{log}</div>
+                      <div key={i} className="text-emerald-800">{log}</div>
                     ))
                   )}
                 </div>
@@ -457,24 +457,24 @@ export function CustomReceiptRefundModal({ isOpen, onClose, customers }: CustomR
             </div>
 
             {/* DISPATCH ACTION */}
-            <div className="space-y-3 pt-4 border-t border-slate-800">
+            <div className="space-y-3 pt-4 border-t border-slate-200">
               {dispatchStatus && (
-                <div className="p-3 bg-emerald-950/60 border border-emerald-600/50 rounded-xl text-xs text-emerald-200 text-center font-medium">
+                <div className="p-3 bg-emerald-50/60 border border-emerald-600/50 rounded-xl text-xs text-emerald-200 text-center font-medium">
                   {dispatchStatus}
                 </div>
               )}
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => window.print()}
-                  className="px-4 py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-2xl border border-slate-700 flex items-center gap-2 transition-all cursor-pointer"
+                  className="px-4 py-3.5 bg-slate-100 hover:bg-slate-700 text-slate-700 font-bold text-xs rounded-2xl border border-slate-300 flex items-center gap-2 transition-all cursor-pointer"
                   title="Print Receipt"
                 >
-                  <Printer className="w-4 h-4 text-emerald-400" />
+                  <Printer className="w-4 h-4 text-emerald-700" />
                   <span>Print Receipt</span>
                 </button>
                 <button
                   onClick={handleDispatchRefund}
-                  className="flex-1 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-xl border border-emerald-400/40 flex items-center justify-center gap-2 transition-all cursor-pointer"
+                  className="flex-1 py-3.5 bg-emerald-700 hover:bg-emerald-500 text-slate-900 font-black text-xs uppercase tracking-wider rounded-2xl shadow-xl border border-emerald-400/40 flex items-center justify-center gap-2 transition-all cursor-pointer"
                 >
                   <Send className="w-4 h-4" />
                   <span>Issue Custom Receipt Refund &amp; Send Notice</span>

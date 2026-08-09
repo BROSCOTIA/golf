@@ -204,42 +204,42 @@ export function StoreCreditPolicyModal({ isOpen, onClose }: StoreCreditPolicyMod
   ];
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-fadeIn">
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-3xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-[9999] bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fadeIn">
+      <div className="bg-white border border-slate-200 rounded-3xl max-w-3xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         
         {/* Modal Header */}
-        <div className="bg-slate-950 px-6 py-5 border-b border-slate-800 flex items-center justify-between">
+        <div className="bg-slate-50 px-6 py-5 border-b border-slate-200 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shadow-inner">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center shadow-xs">
               <BookOpen className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 bg-emerald-950 border border-emerald-800 px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
                   Golf Town Operating Standard
                 </span>
               </div>
-              <h2 className="text-lg font-black text-white tracking-tight">
+              <h2 className="text-lg font-black text-slate-900 tracking-tight">
                 Store Credit & Gift Card Operating Policy
               </h2>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-slate-400 hover:text-white bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-xl transition-all cursor-pointer"
+            className="p-2 text-slate-400 hover:text-slate-900 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl transition-all cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex border-b border-slate-800 bg-slate-950/60 px-6 gap-2 pt-3 overflow-x-auto">
+        <div className="flex border-b border-slate-200 bg-white px-6 gap-2 pt-3 overflow-x-auto">
           <button
             onClick={() => setActiveTab('policy')}
             className={`px-4 py-2.5 text-xs font-bold rounded-t-xl border-t border-x transition-all flex items-center gap-2 whitespace-nowrap ${
               activeTab === 'policy'
-                ? 'bg-slate-900 border-slate-800 text-emerald-400 border-b-transparent -mb-px'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+                ? 'bg-white border-slate-200 text-emerald-800 border-b-transparent -mb-px'
+                : 'border-transparent text-slate-400 hover:text-slate-900'
             }`}
           >
             <ShieldCheck className="w-4 h-4" />
@@ -249,41 +249,41 @@ export function StoreCreditPolicyModal({ isOpen, onClose }: StoreCreditPolicyMod
             onClick={() => setActiveTab('giftcard')}
             className={`px-4 py-2.5 text-xs font-bold rounded-t-xl border-t border-x transition-all flex items-center gap-2 whitespace-nowrap ${
               activeTab === 'giftcard'
-                ? 'bg-slate-900 border-slate-800 text-emerald-400 border-b-transparent -mb-px'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+                ? 'bg-white border-slate-200 text-emerald-800 border-b-transparent -mb-px'
+                : 'border-transparent text-slate-400 hover:text-slate-900'
             }`}
           >
             <CreditCard className="w-4 h-4" />
-            <span>Gift Card Support Link</span>
+            <span>Gift Card Support</span>
           </button>
           <button
             onClick={() => setActiveTab('emails')}
             className={`px-4 py-2.5 text-xs font-bold rounded-t-xl border-t border-x transition-all flex items-center gap-2 whitespace-nowrap ${
               activeTab === 'emails'
-                ? 'bg-slate-900 border-slate-800 text-emerald-400 border-b-transparent -mb-px'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+                ? 'bg-white border-slate-200 text-emerald-800 border-b-transparent -mb-px'
+                : 'border-transparent text-slate-400 hover:text-slate-900'
             }`}
           >
             <Mail className="w-4 h-4" />
-            <span>Customer Support Emails</span>
+            <span>Support Emails</span>
           </button>
           <button
             onClick={() => setActiveTab('telegram')}
             className={`px-4 py-2.5 text-xs font-bold rounded-t-xl border-t border-x transition-all flex items-center gap-2 whitespace-nowrap ${
               activeTab === 'telegram'
-                ? 'bg-slate-900 border-slate-800 text-emerald-400 border-b-transparent -mb-px'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+                ? 'bg-white border-slate-200 text-emerald-800 border-b-transparent -mb-px'
+                : 'border-transparent text-slate-400 hover:text-slate-900'
             }`}
           >
             <Send className="w-4 h-4" />
-            <span>Telegram Bot Integration</span>
+            <span>Telegram Bot</span>
           </button>
           <button
             onClick={() => setActiveTab('audit')}
             className={`px-4 py-2.5 text-xs font-bold rounded-t-xl border-t border-x transition-all flex items-center gap-2 whitespace-nowrap ${
               activeTab === 'audit'
-                ? 'bg-slate-900 border-slate-800 text-emerald-400 border-b-transparent -mb-px'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+                ? 'bg-white border-slate-200 text-emerald-800 border-b-transparent -mb-px'
+                : 'border-transparent text-slate-400 hover:text-slate-900'
             }`}
           >
             <FileText className="w-4 h-4" />
@@ -293,8 +293,8 @@ export function StoreCreditPolicyModal({ isOpen, onClose }: StoreCreditPolicyMod
             onClick={() => setActiveTab('faq')}
             className={`px-4 py-2.5 text-xs font-bold rounded-t-xl border-t border-x transition-all flex items-center gap-2 whitespace-nowrap ${
               activeTab === 'faq'
-                ? 'bg-slate-900 border-slate-800 text-emerald-400 border-b-transparent -mb-px'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+                ? 'bg-white border-slate-200 text-emerald-800 border-b-transparent -mb-px'
+                : 'border-transparent text-slate-400 hover:text-slate-900'
             }`}
           >
             <HelpCircle className="w-4 h-4" />
@@ -303,79 +303,79 @@ export function StoreCreditPolicyModal({ isOpen, onClose }: StoreCreditPolicyMod
         </div>
 
         {/* Tab Content Body */}
-        <div className="p-6 overflow-y-auto space-y-6 text-slate-300 text-xs leading-relaxed flex-1">
+        <div className="p-6 overflow-y-auto space-y-6 text-slate-600 text-xs font-medium leading-relaxed flex-1">
           {activeTab === 'policy' && (
             <div className="space-y-5">
-              <div className="bg-emerald-950/30 border border-emerald-800/50 p-4 rounded-2xl flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+              <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl flex items-start gap-3">
+                <CheckCircle2 className="w-5 h-5 text-emerald-700 shrink-0 mt-0.5" />
                 <div>
-                  <h3 className="font-bold text-white text-sm">Official Golf Town Store Credit Terms</h3>
-                  <p className="text-slate-300 mt-0.5">
+                  <h3 className="font-bold text-slate-900 text-sm">Official Golf Town Store Credit Terms</h3>
+                  <p className="text-slate-600 mt-0.5">
                     Golf Town Store Credit balances do not expire, are non-transferable, and must be redeemed exclusively against valid merchandise or services at authorized Golf Town retail locations across Canada.
                   </p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-slate-950 border border-slate-800 p-4 rounded-2xl">
-                  <h4 className="font-bold text-slate-100 text-xs mb-2 flex items-center gap-1.5 text-emerald-400">
+                <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl">
+                  <h4 className="font-bold text-slate-900 text-xs mb-2 flex items-center gap-1.5 text-emerald-800">
                     <ChevronRight className="w-4 h-4" />
                     Issuance & Redemption Rules
                   </h4>
-                  <ul className="space-y-2 text-slate-400 text-[11px]">
+                  <ul className="space-y-2 text-slate-500 text-[11px] font-bold">
                     <li className="flex items-start gap-2">
-                      <span className="text-emerald-500 font-bold">•</span>
+                      <span className="text-emerald-700 font-bold">•</span>
                       <span>Store Credit is non-refundable for cash or cash equivalents under any circumstances.</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="text-emerald-500 font-bold">•</span>
+                      <span className="text-emerald-700 font-bold">•</span>
                       <span>Balances over $1,000 require Store Manager or Regional Director co-authorization.</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="text-emerald-500 font-bold">•</span>
+                      <span className="text-emerald-700 font-bold">•</span>
                       <span>Redeemable on custom club fitting, apparel, footwear, accessories, and hardgoods.</span>
                     </li>
                   </ul>
                 </div>
 
-                <div className="bg-slate-950 border border-slate-800 p-4 rounded-2xl">
-                  <h4 className="font-bold text-slate-100 text-xs mb-2 flex items-center gap-1.5 text-emerald-400">
+                <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl">
+                  <h4 className="font-bold text-slate-900 text-xs mb-2 flex items-center gap-1.5 text-emerald-800">
                     <ChevronRight className="w-4 h-4" />
                     Customer Identity & Verification
                   </h4>
-                  <ul className="space-y-2 text-slate-400 text-[11px]">
+                  <ul className="space-y-2 text-slate-500 text-[11px] font-bold">
                     <li className="flex items-start gap-2">
-                      <span className="text-emerald-500 font-bold">•</span>
+                      <span className="text-emerald-700 font-bold">•</span>
                       <span>Government-issued photo ID must match customer name on record during redemption.</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="text-emerald-500 font-bold">•</span>
+                      <span className="text-emerald-700 font-bold">•</span>
                       <span>Phone number and Customer ID must be verified against store POS master records.</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="text-emerald-500 font-bold">•</span>
+                      <span className="text-emerald-700 font-bold">•</span>
                       <span>Unclaimed balances over 365 days undergo quarterly compliance audit review.</span>
                     </li>
                   </ul>
                 </div>
               </div>
 
-              <div className="bg-slate-950 border border-slate-800 p-4 rounded-2xl space-y-2">
-                <h4 className="font-bold text-slate-100 text-xs text-emerald-400">
+              <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl space-y-2">
+                <h4 className="font-bold text-slate-900 text-xs text-emerald-800">
                   Aging & Dormancy Lifecycle
                 </h4>
                 <div className="grid grid-cols-3 gap-2 text-center text-[11px] pt-1">
-                  <div className="bg-slate-900 p-2 rounded-xl border border-slate-800">
-                    <span className="block font-bold text-emerald-400">0 - 30 Days</span>
-                    <span className="text-slate-400 text-[10px]">Active Balance</span>
+                  <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-xs">
+                    <span className="block font-bold text-emerald-700">0 - 30 Days</span>
+                    <span className="text-slate-500 text-[10px] font-bold">Active Balance</span>
                   </div>
-                  <div className="bg-slate-900 p-2 rounded-xl border border-slate-800">
-                    <span className="block font-bold text-amber-400">31 - 90 Days</span>
-                    <span className="text-slate-400 text-[10px]">Pending Follow-up</span>
+                  <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-xs">
+                    <span className="block font-bold text-amber-700">31 - 90 Days</span>
+                    <span className="text-slate-500 text-[10px] font-bold">Pending Follow-up</span>
                   </div>
-                  <div className="bg-slate-900 p-2 rounded-xl border border-slate-800">
-                    <span className="block font-bold text-rose-400">90+ Days</span>
-                    <span className="text-slate-400 text-[10px]">Audit Review</span>
+                  <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-xs">
+                    <span className="block font-bold text-rose-700">90+ Days</span>
+                    <span className="text-slate-500 text-[10px] font-bold">Audit Review</span>
                   </div>
                 </div>
               </div>
@@ -384,18 +384,18 @@ export function StoreCreditPolicyModal({ isOpen, onClose }: StoreCreditPolicyMod
 
           {activeTab === 'giftcard' && (
             <div className="space-y-4">
-              <div className="bg-slate-950 border border-slate-800 p-5 rounded-2xl">
+              <div className="bg-white border border-slate-200 p-5 rounded-2xl shadow-sm">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl">
+                  <div className="p-2.5 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-xl shadow-xs">
                     <CreditCard className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-white">Golf Town Official Gift Card Portal</h3>
-                    <p className="text-slate-400 text-[11px]">Check balances, purchase e-Gift cards, or contact card support</p>
+                    <h3 className="text-sm font-bold text-slate-900">Golf Town Official Gift Card Portal</h3>
+                    <p className="text-slate-500 text-[11px] font-bold">Check balances, purchase e-Gift cards, or contact card support</p>
                   </div>
                 </div>
                 
-                <p className="text-slate-300 text-xs leading-relaxed mb-4">
+                <p className="text-slate-600 text-xs font-medium leading-relaxed mb-4">
                   Customers can check their current physical or electronic Golf Town Gift Card balance online or via the Golf Town Customer Care team.
                 </p>
 
@@ -404,9 +404,9 @@ export function StoreCreditPolicyModal({ isOpen, onClose }: StoreCreditPolicyMod
                     href="https://golftown.cashstar.com/self_service/v2/about/customer_support/contact?locale=en-ca"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg transition-all"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs rounded-xl shadow-lg transition-all"
                   >
-                    <span>Visit Golf Town CashStar Gift Card Support</span>
+                    <span>Visit Golf Town CashStar Support</span>
                     <ExternalLink className="w-3.5 h-3.5" />
                   </a>
 
@@ -414,24 +414,24 @@ export function StoreCreditPolicyModal({ isOpen, onClose }: StoreCreditPolicyMod
                     href="https://www.golftown.com/en-CA/customer-service.html"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl border border-slate-700 transition-all"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 font-bold text-xs rounded-xl shadow-xs hover:bg-slate-50 transition-all"
                   >
-                    <span>Golf Town Customer Care Portal</span>
+                    <span>Customer Care Portal</span>
                     <ExternalLink className="w-3.5 h-3.5" />
                   </a>
                 </div>
               </div>
 
-              <div className="bg-slate-950 border border-slate-800 p-4 rounded-2xl space-y-2">
-                <h4 className="font-semibold text-white text-xs">Gift Card & Store Credit Assistance</h4>
-                <ul className="space-y-2 text-slate-400 text-[11px]">
+              <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl space-y-2">
+                <h4 className="font-bold text-slate-900 text-xs">Gift Card & Store Credit Assistance</h4>
+                <ul className="space-y-2 text-slate-500 text-[11px] font-bold">
                   <li className="flex items-start gap-2">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700 shrink-0 mt-0.5" />
                     <span><strong>Gift Card Balance Inquiries:</strong> Call Toll-Free 1-844-360-1010 or check online.</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                    <span><strong>Lost or Stolen Cards:</strong> Contact customer support immediately with original purchase receipt.</span>
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700 shrink-0 mt-0.5" />
+                    <span><strong>Lost or Stolen Cards:</strong> Contact support with original purchase receipt.</span>
                   </li>
                 </ul>
               </div>
@@ -441,24 +441,24 @@ export function StoreCreditPolicyModal({ isOpen, onClose }: StoreCreditPolicyMod
           {activeTab === 'emails' && (
             <div className="space-y-6">
               {/* Email Template Editor Section */}
-              <div className="bg-slate-950 border border-slate-800 rounded-2xl p-5 space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-800/80 pb-3 flex-wrap gap-2">
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-sm">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3 flex-wrap gap-2">
                   <div>
-                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                      <Mail className="w-4 h-4 text-emerald-400" />
+                    <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-emerald-700" />
                       Notice Email Subject &amp; Body Templates
                     </h3>
-                    <p className="text-slate-400 text-[11px] mt-0.5">Customize transaction notifications and dormant account reminders dispatched via SMTP</p>
+                    <p className="text-slate-500 text-[11px] font-bold mt-0.5">Customize transaction notifications and dormant account reminders dispatched via SMTP</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={handleResetTemplates}
-                      className="px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-slate-200 rounded-xl text-[10px] font-bold transition-all"
+                      className="px-2.5 py-1.5 bg-white border border-slate-200 text-slate-500 hover:text-slate-900 rounded-xl text-[10px] font-bold transition-all shadow-xs cursor-pointer"
                     >
                       Reset Defaults
                     </button>
-                    <span className="bg-emerald-950 text-emerald-400 border border-emerald-800/80 text-[10px] font-bold px-2.5 py-1 rounded-lg">
-                      Active Template: {activeTemplate.name}
+                    <span className="bg-emerald-50 text-emerald-800 border border-emerald-100 text-[10px] font-bold px-2.5 py-1 rounded-lg">
+                      Active: {activeTemplate.name}
                     </span>
                   </div>
                 </div>
@@ -467,14 +467,14 @@ export function StoreCreditPolicyModal({ isOpen, onClose }: StoreCreditPolicyMod
                   {/* Left Column: Selector & Placeholders */}
                   <div className="md:col-span-4 space-y-4">
                     <div>
-                      <label className="block text-[10px] uppercase font-black text-slate-400 tracking-wider mb-1.5">Select Scenario</label>
+                      <label className="block text-[10px] uppercase font-black text-slate-500 tracking-wider mb-1.5">Select Scenario</label>
                       <select
                         value={activeTemplateId}
                         onChange={(e) => {
                           setActiveTemplateId(e.target.value);
                           localStorage.setItem('golf_town_active_template_id', e.target.value);
                         }}
-                        className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs font-bold text-slate-200 focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 cursor-pointer"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 cursor-pointer"
                       >
                         {templates.map((t: any) => (
                           <option key={t.id} value={t.id}>
@@ -484,17 +484,17 @@ export function StoreCreditPolicyModal({ isOpen, onClose }: StoreCreditPolicyMod
                       </select>
                     </div>
 
-                    <div className="bg-slate-900/60 border border-slate-800/80 rounded-xl p-3 space-y-2.5">
-                      <h4 className="text-[10px] uppercase font-black text-emerald-400 tracking-wider">Dynamic Placeholders</h4>
-                      <p className="text-[10px] text-slate-400 leading-relaxed">Click any tag below to copy or insert it into your templates:</p>
+                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 space-y-2.5 shadow-xs">
+                      <h4 className="text-[10px] uppercase font-black text-emerald-800 tracking-wider">Dynamic Placeholders</h4>
+                      <p className="text-[10px] text-slate-500 font-bold leading-relaxed">Click to copy tags:</p>
                       <div className="flex flex-wrap gap-1.5">
                         {[
-                          { token: '{customerName}', desc: 'Customer full name' },
-                          { token: '{amount}', desc: 'Store credit balance amount' },
-                          { token: '{storeId}', desc: 'Golf Town Retail Store ID' },
-                          { token: '{custId}', desc: '10-digit POS customer account ID' },
-                          { token: '{comments}', desc: 'Reference notes/audit comments' },
-                          { token: '{depositLink}', desc: 'Verified short deposit claim URL' }
+                          { token: '{customerName}', desc: 'Full Name' },
+                          { token: '{amount}', desc: 'Credit Balance' },
+                          { token: '{storeId}', desc: 'Store ID' },
+                          { token: '{custId}', desc: 'Customer ID' },
+                          { token: '{comments}', desc: 'Audit Notes' },
+                          { token: '{depositLink}', desc: 'Claim URL' }
                         ].map((item) => (
                           <button
                             key={item.token}
@@ -502,11 +502,11 @@ export function StoreCreditPolicyModal({ isOpen, onClose }: StoreCreditPolicyMod
                               navigator.clipboard.writeText(item.token);
                               alert(`Copied "${item.token}" to clipboard!`);
                             }}
-                            className="text-[10px] font-mono bg-slate-950 hover:bg-slate-850 border border-slate-800 text-slate-300 px-2 py-1 rounded-md transition-all cursor-pointer hover:border-slate-700 flex items-center justify-between w-full text-left group"
+                            className="text-[10px] font-mono bg-white border border-slate-200 text-slate-700 px-2 py-1 rounded-md transition-all cursor-pointer hover:border-emerald-500 flex items-center justify-between w-full text-left group shadow-xs"
                             title={item.desc}
                           >
-                            <span className="font-bold text-emerald-400 group-hover:text-emerald-300">{item.token}</span>
-                            <span className="text-[9px] text-slate-500 font-sans">{item.desc}</span>
+                            <span className="font-bold text-emerald-800">{item.token}</span>
+                            <span className="text-[9px] text-slate-500 font-sans font-bold">{item.desc}</span>
                           </button>
                         ))}
                       </div>
@@ -516,23 +516,23 @@ export function StoreCreditPolicyModal({ isOpen, onClose }: StoreCreditPolicyMod
                   {/* Right Column: Editor Inputs */}
                   <div className="md:col-span-8 space-y-4">
                     <div>
-                      <label className="block text-[10px] uppercase font-black text-slate-400 tracking-wider mb-1.5">Email Subject Line Template</label>
+                      <label className="block text-[10px] uppercase font-black text-slate-500 tracking-wider mb-1.5">Email Subject Line Template</label>
                       <input
                         type="text"
                         value={subjectInput}
                         onChange={(e) => setSubjectInput(e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white font-bold focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-900 font-bold focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20"
                         placeholder="Subject Line..."
                       />
                     </div>
 
                     <div>
-                      <label className="block text-[10px] uppercase font-black text-slate-400 tracking-wider mb-1.5">Email Body Notice Template</label>
+                      <label className="block text-[10px] uppercase font-black text-slate-500 tracking-wider mb-1.5">Email Body Notice Template</label>
                       <textarea
                         value={bodyInput}
                         onChange={(e) => setBodyInput(e.target.value)}
                         rows={6}
-                        className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-xs text-slate-200 font-medium focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 leading-relaxed font-sans"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs text-slate-700 font-bold focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 leading-relaxed font-sans"
                         placeholder="Type notice template message body here..."
                       />
                     </div>
@@ -540,10 +540,10 @@ export function StoreCreditPolicyModal({ isOpen, onClose }: StoreCreditPolicyMod
                     <div className="flex justify-end gap-2 pt-1">
                       <button
                         onClick={handleSaveTemplate}
-                        className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg transition-all flex items-center gap-1.5 cursor-pointer"
+                        className="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-lg transition-all flex items-center gap-1.5 cursor-pointer"
                       >
                         <CheckCircle2 className="w-4 h-4" />
-                        <span>Save Template &amp; Activate</span>
+                        <span>Save Template & Activate</span>
                       </button>
                     </div>
                   </div>
@@ -552,12 +552,12 @@ export function StoreCreditPolicyModal({ isOpen, onClose }: StoreCreditPolicyMod
 
               {/* Email Directory Section */}
               <div className="space-y-4 pt-2">
-                <div className="bg-slate-950 border border-slate-800 p-4 rounded-2xl flex items-center justify-between">
+                <div className="bg-white border border-slate-200 p-4 rounded-2xl flex items-center justify-between shadow-xs">
                   <div>
-                    <h3 className="text-sm font-bold text-white">Golf Town Customer Support Email Directory</h3>
-                    <p className="text-slate-400 text-[11px]">Direct email channels for customer support and store credit reconciliation</p>
+                    <h3 className="text-sm font-bold text-slate-900">Golf Town Support Email Directory</h3>
+                    <p className="text-slate-500 text-[11px] font-bold">Direct email channels for customer support and store credit reconciliation</p>
                   </div>
-                  <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-emerald-950/80 border border-emerald-800 rounded-xl text-emerald-400 text-[10px] font-bold">
+                  <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-100 rounded-xl text-emerald-800 text-[10px] font-bold">
                     <ShieldCheck className="w-3.5 h-3.5" />
                     <span>Outbox Suppression Active</span>
                   </div>
@@ -565,41 +565,36 @@ export function StoreCreditPolicyModal({ isOpen, onClose }: StoreCreditPolicyMod
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {supportEmails.map((item, i) => (
-                    <div key={i} className="bg-slate-950 border border-slate-800 p-4 rounded-2xl flex flex-col justify-between">
+                    <div key={i} className="bg-white border border-slate-200 p-4 rounded-2xl flex flex-col justify-between shadow-xs">
                       <div>
-                        <span className="text-[10px] font-bold uppercase text-emerald-400 bg-emerald-950 border border-emerald-800 px-2 py-0.5 rounded-md">
+                        <span className="text-[10px] font-bold uppercase text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
                           {item.role}
                         </span>
-                        <h4 className="font-bold text-white text-xs mt-2">{item.title}</h4>
-                        <p className="text-slate-400 text-[11px] mt-1">{item.desc}</p>
+                        <h4 className="font-bold text-slate-900 text-xs mt-2">{item.title}</h4>
+                        <p className="text-slate-500 text-[11px] font-medium mt-1 leading-relaxed">{item.desc}</p>
                       </div>
 
-                      <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between gap-2">
-                        <span className="font-mono text-[11px] text-emerald-300 font-semibold truncate">
+                      <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                        <span className="font-mono text-[11px] text-emerald-900 font-black truncate">
                           {item.email}
                         </span>
                         <div className="flex items-center gap-1 shrink-0">
                           <button
                             onClick={() => handleCopy(item.email)}
-                            className="p-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-all"
-                            title="Copy Email Address"
+                            className="p-1.5 bg-white border border-slate-200 text-slate-600 hover:text-slate-900 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-all shadow-xs cursor-pointer"
+                            title="Copy Email"
                           >
                             {copiedEmail === item.email ? (
-                              <>
-                                <Check className="w-3 h-3 text-emerald-400" />
-                                <span className="text-emerald-400">Copied</span>
-                              </>
+                              <Check className="w-3 h-3 text-emerald-700" />
                             ) : (
-                              <>
-                                <Copy className="w-3 h-3" />
-                                <span>Copy</span>
-                              </>
+                              <Copy className="w-3 h-3" />
                             )}
+                            <span>{copiedEmail === item.email ? 'Copied' : 'Copy'}</span>
                           </button>
                           <a
                             href={`mailto:${item.email}?subject=Golf%20Town%20Store%20Credit%20Inquiry`}
-                            className="p-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-[10px] font-bold flex items-center gap-1 transition-all"
-                            title="Open Email Client"
+                            className="p-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-[10px] font-bold flex items-center gap-1 transition-all shadow-xs"
+                            title="Send Email"
                           >
                             <Mail className="w-3 h-3" />
                             <span>Send</span>

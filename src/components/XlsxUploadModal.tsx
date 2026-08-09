@@ -4,7 +4,7 @@ import { CustomerRecord, StoreLocation } from '../types';
 import { GOLF_TOWN_STORES, findGolfTownStore } from '../data/golfTownStores';
 import { guessGender } from '../data/initialData';
 import { parseRowWithSmartAlignment, sanitizeCustomerRecord } from '../data/dataSanitizer';
-import { Upload, FileSpreadsheet, Check, MapPin, Store, AlertCircle, X, ChevronRight, Sparkles } from 'lucide-react';
+import { Upload, FileSpreadsheet, Check, MapPin, Store, AlertCircle, X, ChevronRight, Sparkles, ShieldCheck } from 'lucide-react';
 
 interface SheetParsedData {
   sheetName: string;
@@ -211,24 +211,24 @@ export const XlsxUploadModal: React.FC<XlsxUploadModalProps> = ({
   const activeSheet = parsedSheets[activeTabIdx];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fade-in">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4 animate-fade-in">
+      <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="p-6 bg-gradient-to-r from-emerald-900 via-emerald-800 to-slate-900 text-white flex items-center justify-between">
+        <div className="p-6 bg-slate-50 border-b border-slate-200 text-slate-900 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-emerald-700/50 rounded-xl border border-emerald-500/30 text-emerald-200">
+            <div className="p-3 bg-emerald-50 text-emerald-700 rounded-2xl border border-emerald-200 shadow-xs">
               <FileSpreadsheet className="w-6 h-6" />
             </div>
             <div>
-              <span className="text-xs font-semibold tracking-wider text-emerald-300 uppercase bg-emerald-950/80 px-2.5 py-0.5 rounded-full border border-emerald-700">
-                Multi-Tab XLSX Store Import
+              <span className="text-[10px] font-black tracking-widest text-emerald-800 uppercase bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                POS Reconciliation Engine
               </span>
-              <h3 className="text-xl font-bold mt-1 text-white">Import Golf Town Excel Workbook</h3>
+              <h3 className="text-xl font-black mt-1 text-slate-900 tracking-tight">Import Golf Town Excel Workbook</h3>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-emerald-200 hover:text-white hover:bg-emerald-800/60 rounded-lg transition-colors"
+            className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all cursor-pointer border border-transparent hover:border-slate-200"
           >
             <X className="w-5 h-5" />
           </button>
@@ -241,16 +241,16 @@ export const XlsxUploadModal: React.FC<XlsxUploadModalProps> = ({
             <div
               onDragOver={(e) => e.preventDefault()}
               onDrop={handleDrop}
-              className="border-2 border-dashed border-slate-300 hover:border-emerald-500 bg-slate-50 hover:bg-emerald-50/30 rounded-2xl p-8 text-center transition-all cursor-pointer flex flex-col items-center justify-center space-y-4"
+              className="border-2 border-dashed border-slate-200 hover:border-emerald-500 bg-slate-50 hover:bg-emerald-50/30 rounded-3xl p-12 text-center transition-all cursor-pointer flex flex-col items-center justify-center space-y-4 group"
             >
-              <div className="p-4 bg-emerald-100/80 text-emerald-800 rounded-2xl shadow-sm">
-                <Upload className="w-8 h-8" />
+              <div className="p-5 bg-white border border-slate-200 text-slate-400 group-hover:text-emerald-700 group-hover:scale-110 rounded-2xl shadow-sm transition-all">
+                <Upload className="w-10 h-10" />
               </div>
               <div>
-                <p className="text-base font-bold text-slate-800">
+                <p className="text-lg font-black text-slate-900">
                   Drag & Drop Multi-Tab XLSX or Click to Browse
                 </p>
-                <p className="text-xs text-slate-500 mt-1">
+                <p className="text-xs text-slate-500 font-bold mt-1">
                   Supports .xlsx, .xls, .csv files containing multiple Golf Town store tabs
                 </p>
               </div>
@@ -263,7 +263,7 @@ export const XlsxUploadModal: React.FC<XlsxUploadModalProps> = ({
               />
               <label
                 htmlFor="xlsx-file-input"
-                className="px-6 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-sm rounded-xl shadow-md transition-colors cursor-pointer inline-flex items-center gap-2"
+                className="px-8 py-3 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-sm rounded-xl shadow-lg transition-all cursor-pointer inline-flex items-center gap-2 active:scale-95"
               >
                 Select Excel File
               </label>
@@ -271,19 +271,21 @@ export const XlsxUploadModal: React.FC<XlsxUploadModalProps> = ({
           ) : (
             <div className="space-y-6">
               {/* File Info Bar */}
-              <div className="flex items-center justify-between p-4 bg-slate-100 rounded-xl border border-slate-200">
-                <div className="flex items-center gap-3">
-                  <FileSpreadsheet className="w-5 h-5 text-emerald-700" />
+              <div className="flex items-center justify-between p-5 bg-slate-50 rounded-2xl border border-slate-200 shadow-sm">
+                <div className="flex items-center gap-4">
+                  <div className="p-2.5 bg-white border border-slate-200 rounded-xl shadow-xs text-emerald-700">
+                    <FileSpreadsheet className="w-6 h-6" />
+                  </div>
                   <div>
-                    <p className="text-sm font-bold text-slate-800">{file.name}</p>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-sm font-black text-slate-900">{file.name}</p>
+                    <p className="text-xs text-slate-500 font-bold">
                       Found {parsedSheets.length} sheet tabs • {parsedSheets.reduce((sum, s) => sum + s.records.length, 0)} total records
                     </p>
                   </div>
                 </div>
                 <label
                   htmlFor="xlsx-file-input-change"
-                  className="px-3 py-1.5 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-semibold rounded-lg shadow-sm cursor-pointer"
+                  className="px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold rounded-xl shadow-xs cursor-pointer transition-all active:scale-95"
                 >
                   Change File
                   <input
@@ -297,15 +299,15 @@ export const XlsxUploadModal: React.FC<XlsxUploadModalProps> = ({
               </div>
 
               {/* Sheet Tabs Navigation */}
-              <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-200">
+              <div className="flex items-center gap-2 overflow-x-auto pb-4 scrollbar-hide">
                 {parsedSheets.map((s, idx) => (
                   <button
                     key={s.sheetName}
                     onClick={() => setActiveTabIdx(idx)}
-                    className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl transition-all border whitespace-nowrap ${
+                    className={`flex items-center gap-3 px-5 py-2.5 text-xs font-bold rounded-xl transition-all border whitespace-nowrap shadow-xs ${
                       activeTabIdx === idx
-                        ? 'bg-emerald-800 text-white border-emerald-900 shadow-md'
-                        : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border-slate-200'
+                        ? 'bg-emerald-800 text-white border-emerald-900 shadow-md ring-2 ring-emerald-500/20'
+                        : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200'
                     }`}
                   >
                     <input
@@ -315,11 +317,11 @@ export const XlsxUploadModal: React.FC<XlsxUploadModalProps> = ({
                         e.stopPropagation();
                         toggleSheetSelected(idx);
                       }}
-                      className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                      className="rounded border-slate-300 text-emerald-700 focus:ring-emerald-500 w-4 h-4 cursor-pointer"
                     />
                     <span>{s.sheetName}</span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] bg-slate-200/80 text-slate-800 font-bold">
-                      {s.records.length} recs
+                    <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black ${activeTabIdx === idx ? 'bg-emerald-700/50 text-white' : 'bg-slate-100 text-slate-700'}`}>
+                      {s.records.length} RECS
                     </span>
                   </button>
                 ))}
@@ -327,26 +329,28 @@ export const XlsxUploadModal: React.FC<XlsxUploadModalProps> = ({
 
               {/* Active Sheet Details & Store Assignment */}
               {activeSheet && (
-                <div className="space-y-4">
-                  <div className="p-4 bg-emerald-50/60 rounded-2xl border border-emerald-200 flex flex-wrap items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <Store className="w-5 h-5 text-emerald-800" />
+                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <div className="p-5 bg-white rounded-3xl border border-slate-200 flex flex-wrap items-center justify-between gap-6 shadow-sm">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-emerald-50 border border-emerald-100 text-emerald-800 rounded-2xl shadow-xs">
+                        <Store className="w-6 h-6" />
+                      </div>
                       <div>
-                        <p className="text-xs font-semibold text-emerald-900 uppercase tracking-wider">
-                          Auto-Detected Store Location for "{activeSheet.sheetName}"
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                          Store Location Mapping: "{activeSheet.sheetName}"
                         </p>
-                        <p className="text-sm font-bold text-emerald-950 mt-0.5">
+                        <p className="text-base font-black text-slate-900 mt-0.5">
                           {activeSheet.detectedStoreName}
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      <label className="text-xs font-medium text-slate-600">Assign Store Number:</label>
+                    <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 p-2.5 rounded-2xl">
+                      <label className="text-xs font-bold text-slate-500 pl-2">Assign POS Store:</label>
                       <select
                         value={activeSheet.detectedStoreId}
                         onChange={(e) => handleStoreChangeForSheet(activeTabIdx, e.target.value)}
-                        className="px-3 py-1.5 text-xs font-semibold bg-white border border-slate-300 rounded-lg shadow-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                        className="px-4 py-2 text-xs font-bold bg-white border border-slate-200 rounded-xl shadow-xs focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-600 focus:outline-none cursor-pointer transition-all"
                       >
                         {GOLF_TOWN_STORES.map(gs => (
                           <option key={gs.id} value={gs.id}>
@@ -358,41 +362,49 @@ export const XlsxUploadModal: React.FC<XlsxUploadModalProps> = ({
                   </div>
 
                   {/* Customer Record Preview Table */}
-                  <div className="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-                    <div className="bg-slate-100 px-4 py-2.5 border-b border-slate-200 flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-700">
-                        Previewing {activeSheet.records.length} Customer Records
-                      </span>
-                      <span className="text-xs font-semibold text-emerald-800">
+                  <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-sm bg-white">
+                    <div className="bg-slate-50 px-5 py-4 border-b border-slate-200 flex items-center justify-between flex-wrap gap-4">
+                      <div className="flex items-center gap-2">
+                        <span className="p-1 bg-emerald-100 text-emerald-800 rounded-md">
+                          <Check className="w-3 h-3" />
+                        </span>
+                        <span className="text-xs font-black text-slate-900">
+                          Previewing {activeSheet.records.length} Records
+                        </span>
+                      </div>
+                      <div className="bg-white border border-slate-200 px-3 py-1.5 rounded-xl text-xs font-black text-emerald-800 shadow-xs">
                         Total Balance: ${activeSheet.totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                      </span>
+                      </div>
                     </div>
 
-                    <div className="max-h-60 overflow-y-auto">
+                    <div className="max-h-72 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
                       <table className="w-full text-left text-xs">
-                        <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200 sticky top-0">
+                        <thead className="bg-slate-50 text-slate-400 font-black uppercase tracking-widest text-[9px] border-b border-slate-200 sticky top-0 z-10 shadow-xs">
                           <tr>
-                            <th className="p-2.5">Cust ID</th>
-                            <th className="p-2.5">Name</th>
-                            <th className="p-2.5">City</th>
-                            <th className="p-2.5">Phone</th>
-                            <th className="p-2.5">Email / Company</th>
-                            <th className="p-2.5 text-right">Credit Balance</th>
-                            <th className="p-2.5">Comments</th>
+                            <th className="px-5 py-4">Cust ID</th>
+                            <th className="px-5 py-4">Name</th>
+                            <th className="px-5 py-4">City</th>
+                            <th className="px-5 py-4 text-right">Credit Balance</th>
+                            <th className="px-5 py-4">Status / Comments</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100 text-slate-800">
+                        <tbody className="divide-y divide-slate-100 text-slate-800 font-bold">
                           {activeSheet.records.slice(0, 50).map((r, i) => (
-                            <tr key={i} className="hover:bg-slate-50/80">
-                              <td className="p-2.5 font-mono text-slate-600">{r.custId}</td>
-                              <td className="p-2.5 font-semibold">{r.firstName} {r.lastName}</td>
-                              <td className="p-2.5 text-slate-600">{r.city || 'Calgary'}</td>
-                              <td className="p-2.5 font-medium text-emerald-800">{r.phone || '(403) 723-0100'}</td>
-                              <td className="p-2.5 text-slate-500">{r.email || r.company || '-'}</td>
-                              <td className="p-2.5 text-right font-bold text-slate-900">
-                                ${r.sumOfStoreCreditBalance.toFixed(2)}
+                            <tr key={i} className="hover:bg-slate-50/80 transition-colors group">
+                              <td className="px-5 py-3 font-mono text-[10px] text-slate-500">{r.custId}</td>
+                              <td className="px-5 py-3 text-slate-900">{r.firstName} {r.lastName}</td>
+                              <td className="px-5 py-3 text-slate-500">{r.city || 'Calgary'}</td>
+                              <td className="px-5 py-3 text-right font-black text-slate-900">
+                                <span className="bg-slate-50 border border-slate-100 px-2 py-1 rounded-lg">
+                                  ${r.sumOfStoreCreditBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                                </span>
                               </td>
-                              <td className="p-2.5 text-slate-500 max-w-xs truncate">{r.comments || '-'}</td>
+                              <td className="px-5 py-3">
+                                <div className="flex items-center gap-2">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                  <span className="text-slate-400 font-medium text-[10px] max-w-[200px] truncate">{r.comments || 'Direct POS Sync'}</span>
+                                </div>
+                              </td>
                             </tr>
                           ))}
                         </tbody>
@@ -406,24 +418,27 @@ export const XlsxUploadModal: React.FC<XlsxUploadModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
-          <span className="text-xs text-slate-500">
-            {parsedSheets.filter(s => s.selected).length} sheets selected for import
-          </span>
+        <div className="p-6 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="bg-white border border-slate-200 px-3 py-1.5 rounded-xl text-xs font-black text-slate-500 shadow-xs flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-emerald-700" />
+              <span>{parsedSheets.filter(s => s.selected).length} Sheets Active</span>
+            </div>
+          </div>
           <div className="flex items-center gap-3">
             <button
               onClick={onClose}
-              className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-200/80 rounded-xl transition-colors"
+              className="px-6 py-2.5 text-sm font-bold text-slate-500 hover:text-slate-900 hover:bg-slate-200 rounded-xl transition-all cursor-pointer"
             >
               Cancel
             </button>
             <button
               onClick={handleConfirmImport}
               disabled={parsedSheets.length === 0 || !parsedSheets.some(s => s.selected)}
-              className="px-6 py-2.5 text-sm font-bold text-white bg-emerald-800 hover:bg-emerald-900 disabled:opacity-50 rounded-xl shadow-lg transition-all inline-flex items-center gap-2"
+              className="px-8 py-2.5 text-sm font-black text-white bg-emerald-800 hover:bg-emerald-900 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl shadow-lg shadow-emerald-900/10 transition-all inline-flex items-center gap-2 active:scale-95"
             >
-              <Check className="w-4 h-4" />
-              Import All Selected Tabs
+              <Check className="w-5 h-5" />
+              Commit Selected Tabs
             </button>
           </div>
         </div>

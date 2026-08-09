@@ -16,24 +16,24 @@ export const StoreMapModal: React.FC<StoreMapModalProps> = ({ store, isOpen, onC
   const embedMapsUrl = `https://maps.google.com/maps?q=${addressQuery}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/60 backdrop-blur-sm p-4 animate-fade-in">
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Modal Header */}
-        <div className="p-6 bg-gradient-to-r from-emerald-800 to-emerald-950 text-white flex items-start justify-between">
+        <div className="p-6 bg-gradient-to-r from-emerald-800 to-emerald-950 text-slate-900 flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-emerald-700/50 rounded-xl border border-emerald-500/30 text-emerald-200">
+            <div className="p-3 bg-emerald-700/50 rounded-xl border border-emerald-200 text-emerald-200">
               <Building2 className="w-6 h-6" />
             </div>
             <div>
-              <span className="text-xs font-semibold tracking-wider text-emerald-300 uppercase bg-emerald-900/80 px-2.5 py-0.5 rounded-full border border-emerald-700/50">
+              <span className="text-xs font-semibold tracking-wider text-emerald-800 uppercase bg-emerald-100/80 px-2.5 py-0.5 rounded-full border border-emerald-700/50">
                 Golf Town Location #{store.code || store.id}
               </span>
-              <h3 className="text-xl font-bold mt-1 text-white">{store.name}</h3>
+              <h3 className="text-xl font-bold mt-1 text-slate-900">{store.name}</h3>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-emerald-200 hover:text-white hover:bg-emerald-800/60 rounded-lg transition-colors"
+            className="p-2 text-emerald-200 hover:text-slate-900 hover:bg-emerald-800/60 rounded-lg transition-colors"
             title="Close"
           >
             <X className="w-5 h-5" />
@@ -103,7 +103,7 @@ export const StoreMapModal: React.FC<StoreMapModalProps> = ({ store, isOpen, onC
               href={mapsSearchUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-emerald-700 hover:bg-emerald-800 rounded-lg shadow-md transition-colors"
+              className="inline-flex items-center gap-2 px-5 py-2 text-sm font-semibold text-slate-900 bg-emerald-700 hover:bg-emerald-800 rounded-lg shadow-md transition-colors"
             >
               <Navigation className="w-4 h-4" />
               Open in Google Maps

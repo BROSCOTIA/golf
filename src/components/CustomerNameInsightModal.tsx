@@ -63,10 +63,10 @@ export const CustomerNameInsightModal: React.FC<CustomerNameInsightModalProps> =
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/60 backdrop-blur-sm p-4 animate-fade-in">
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="p-5 bg-gradient-to-r from-indigo-900 via-indigo-800 to-purple-900 text-white flex items-center justify-between">
+        <div className="p-5 bg-gradient-to-r from-indigo-900 via-indigo-800 to-purple-900 text-slate-900 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-indigo-700/60 rounded-xl border border-indigo-500/40 text-amber-300">
               <Sparkles className="w-5 h-5 animate-pulse" />
@@ -75,14 +75,14 @@ export const CustomerNameInsightModal: React.FC<CustomerNameInsightModalProps> =
               <span className="text-[10px] font-bold tracking-widest text-indigo-200 uppercase bg-indigo-950/80 px-2 py-0.5 rounded-full border border-indigo-700">
                 AI Name Explanation & Search Insight
               </span>
-              <h3 className="text-lg font-bold text-white mt-0.5">
+              <h3 className="text-lg font-bold text-slate-900 mt-0.5">
                 {customer.firstName} {customer.lastName}
               </h3>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-indigo-200 hover:text-white hover:bg-indigo-800/60 rounded-lg transition-colors"
+            className="p-1.5 text-indigo-200 hover:text-slate-900 hover:bg-indigo-800/60 rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -145,7 +145,7 @@ export const CustomerNameInsightModal: React.FC<CustomerNameInsightModalProps> =
           </button>
           <button
             onClick={onClose}
-            className="px-5 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-md transition-colors"
+            className="px-5 py-2 text-xs font-semibold text-slate-900 bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-md transition-colors"
           >
             Done
           </button>
