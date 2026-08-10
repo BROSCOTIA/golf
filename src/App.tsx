@@ -21,7 +21,7 @@ import {
   PieChart, Store, MapPin, Phone, Building2, X, CheckCircle2, Navigation,
   Smartphone, Table as TableIcon, LayoutGrid, Lock, CreditCard, Mail,
   ExternalLink, Calendar, Menu, Bell, BarChart3, Receipt,
-  ChevronUp, ChevronDown, ChevronsUpDown
+  ChevronUp, ChevronDown, ChevronsUpDown, UserPlus, Upload
 } from 'lucide-react';
 
 /* ============================== Utilities ============================== */
@@ -211,6 +211,7 @@ function AdminDashboard() {
   const [isInsightModalOpen, setIsInsightModalOpen] = useState(false);
   const [insightCustomer, setInsightCustomer] = useState<CustomerRecord | null>(null);
   const [isXlsxModalOpen, setIsXlsxModalOpen] = useState(false);
+  const [isFabMenuOpen, setIsFabMenuOpen] = useState(false);
   const [isPolicyModalOpen, setIsPolicyModalOpen] = useState(false);
   const [isEmailFormModalOpen, setIsEmailFormModalOpen] = useState(false);
   const [isLiveSocketModalOpen, setIsLiveSocketModalOpen] = useState(false);
@@ -221,6 +222,10 @@ function AdminDashboard() {
 
   // ---- Selection & batch ----
   const [selectedCustomerIds, setSelectedCustomerIds] = useState<string[]>([]);
+
+  // ---- Pagination ----
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(50);
 
   // ---- Add/Edit form ----
   const [isAddEditModalOpen, setIsAddEditModalOpen] = useState(false);
@@ -392,6 +397,22 @@ function AdminDashboard() {
       return 0;
     });
   }, [filteredCustomers, sortKey, sortDir]);
+
+  // Reset to page 1 whenever search, store, or filter criteria change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedStoreId, selectedQuarterYear, searchQuery, selectedGender, selectedRefundStatus, startDate, endDate, showAllRecords, sortKey, sortDir]);
+
+  const totalPages = useMemo(() => {
+    if (pageSize === 0) return 1;
+    return Math.ceil(sortedCustomers.length / pageSize) || 1;
+  }, [sortedCustomers.length, pageSize]);
+
+  const paginatedCustomers = useMemo(() => {
+    if (pageSize === 0) return sortedCustomers;
+    const start = (currentPage - 1) * pageSize;
+    return sortedCustomers.slice(start, start + pageSize);
+  }, [sortedCustomers, currentPage, pageSize]);
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) setSortDir(d => (d === 'asc' ? 'desc' : 'asc'));
@@ -1206,18 +1227,28 @@ function AdminDashboard() {
                   </h2>
                 </div>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                 <button
                   onClick={() => setIsXlsxModalOpen(true)}
-                  className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white font-extrabold text-xs rounded-xl shadow transition-all inline-flex items-center gap-1.5 border border-emerald-500 cursor-pointer"
+                  className="px-2.5 sm:px-3 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white font-extrabold text-xs rounded-xl shadow transition-all inline-flex items-center gap-1.5 border border-emerald-500 cursor-pointer"
                   title="Upload & Permanently Save XLSX Spreadsheet"
                 >
                   <FileSpreadsheet className="w-3.5 h-3.5" />
-                  <span>Upload XLSX</span>
+                  <span className="hidden sm:inline">Upload XLSX</span>
+                  <span className="sm:hidden">XLSX</span>
+                </button>
+                <button
+                  onClick={handleOpenAddModal}
+                  className="px-2.5 sm:px-3 py-1.5 bg-emerald-950 hover:bg-emerald-900 text-emerald-200 font-extrabold text-xs rounded-xl shadow transition-all inline-flex items-center gap-1.5 border border-emerald-700 cursor-pointer"
+                  title="Add Single Contact Record"
+                >
+                  <UserPlus className="w-3.5 h-3.5 text-emerald-400" />
+                  <span className="hidden sm:inline">+ Contact</span>
+                  <span className="sm:hidden">+ Add</span>
                 </button>
                 <button
                   onClick={() => handleOpenMapForStore(currentStoreObj)}
-                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl shadow transition-all inline-flex items-center gap-1 border border-slate-700 cursor-pointer"
+                  className="px-2.5 sm:px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl shadow transition-all inline-flex items-center gap-1 border border-slate-700 cursor-pointer"
                 >
                   <Navigation className="w-3.5 h-3.5" />
                   <span>Map</span>
@@ -1225,21 +1256,86 @@ function AdminDashboard() {
               </div>
             </div>
 
-            {/* Select all bar */}
+            {/* Select all & Pagination Top Bar */}
             {filteredCustomers.length > 0 && (
-              <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 flex items-center justify-between text-xs">
-                <label className="flex items-center gap-2 cursor-pointer font-semibold text-slate-300">
-                  <input
-                    type="checkbox"
-                    checked={filteredCustomers.length > 0 && selectedCustomerIds.length === filteredCustomers.length}
-                    onChange={handleToggleSelectAll}
-                    className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-emerald-500 focus:ring-emerald-500 cursor-pointer"
-                  />
-                  <span>Select All Filtered ({filteredCustomers.length})</span>
-                </label>
-                <span className="text-slate-400 font-mono text-[11px]">
-                  {selectedCustomerIds.length} selected
-                </span>
+              <div className="space-y-3">
+                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs">
+                  <label className="flex items-center gap-2 cursor-pointer font-semibold text-slate-300">
+                    <input
+                      type="checkbox"
+                      checked={filteredCustomers.length > 0 && selectedCustomerIds.length === filteredCustomers.length}
+                      onChange={handleToggleSelectAll}
+                      className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-emerald-500 focus:ring-emerald-500 cursor-pointer"
+                    />
+                    <span>Select All Filtered ({filteredCustomers.length.toLocaleString()})</span>
+                  </label>
+                  <span className="text-slate-400 font-mono text-[11px]">
+                    {selectedCustomerIds.length} selected
+                  </span>
+                </div>
+
+                {/* Top Pagination Bar */}
+                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
+                  <div className="text-slate-300 font-semibold text-xs">
+                    Showing <strong className="text-white">{pageSize === 0 ? 1 : ((currentPage - 1) * pageSize + 1).toLocaleString()} - {pageSize === 0 ? filteredCustomers.length.toLocaleString() : Math.min(currentPage * pageSize, filteredCustomers.length).toLocaleString()}</strong> of <strong className="text-emerald-400">{filteredCustomers.length.toLocaleString()}</strong> records
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1.5 text-slate-400">
+                      <span className="text-[11px]">Show:</span>
+                      <select
+                        value={pageSize}
+                        onChange={(e) => {
+                          setPageSize(Number(e.target.value));
+                          setCurrentPage(1);
+                        }}
+                        className="bg-slate-900 border border-slate-700 text-white rounded-lg px-2 py-1 text-xs font-bold focus:outline-none focus:border-emerald-500 cursor-pointer"
+                      >
+                        <option value={25}>25 / page</option>
+                        <option value={50}>50 / page</option>
+                        <option value={100}>100 / page</option>
+                        <option value={250}>250 / page</option>
+                        <option value={0}>All ({filteredCustomers.length.toLocaleString()})</option>
+                      </select>
+                    </div>
+                    {pageSize > 0 && totalPages > 1 && (
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => setCurrentPage(1)}
+                          disabled={currentPage === 1}
+                          className="px-2 py-1 rounded-lg bg-slate-900 border border-slate-700 text-slate-300 disabled:opacity-40 hover:bg-slate-800 font-bold text-xs cursor-pointer"
+                          title="First Page"
+                        >
+                          «
+                        </button>
+                        <button
+                          onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                          disabled={currentPage === 1}
+                          className="px-2 py-1 rounded-lg bg-slate-900 border border-slate-700 text-slate-300 disabled:opacity-40 hover:bg-slate-800 font-bold text-xs cursor-pointer"
+                        >
+                          Prev
+                        </button>
+                        <span className="px-1 text-slate-400 font-mono text-[11px]">
+                          <strong className="text-white">{currentPage}</strong>/{totalPages}
+                        </span>
+                        <button
+                          onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                          disabled={currentPage === totalPages}
+                          className="px-2 py-1 rounded-lg bg-slate-900 border border-slate-700 text-slate-300 disabled:opacity-40 hover:bg-slate-800 font-bold text-xs cursor-pointer"
+                        >
+                          Next
+                        </button>
+                        <button
+                          onClick={() => setCurrentPage(totalPages)}
+                          disabled={currentPage === totalPages}
+                          className="px-2 py-1 rounded-lg bg-slate-900 border border-slate-700 text-slate-300 disabled:opacity-40 hover:bg-slate-800 font-bold text-xs cursor-pointer"
+                          title="Last Page"
+                        >
+                          »
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
 
@@ -1252,7 +1348,7 @@ function AdminDashboard() {
                     <p className="text-[11px] text-slate-600">Try adjusting your filters or search terms.</p>
                   </div>
                 ) : (
-                  sortedCustomers.map(c => {
+                  paginatedCustomers.map(c => {
                     const storeMatch = stores.find(s => s.id === c.storeId) || GOLF_TOWN_STORES.find(s => s.id === c.storeId);
                     return (
                       <MobileContactCard
@@ -1348,7 +1444,7 @@ function AdminDashboard() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/80 text-slate-200">
-                      {sortedCustomers.map((c, idx) => (
+                      {paginatedCustomers.map((c, idx) => (
                         <tr key={c.id} className={`hover:bg-slate-900/80 transition-colors ${selectedCustomerIds.includes(c.id) ? 'bg-emerald-950/20' : idx % 2 === 0 ? 'bg-slate-950' : 'bg-slate-900/30'}`}>
                           <td className="p-3 text-center">
                             <input
@@ -1472,6 +1568,71 @@ function AdminDashboard() {
                       ))}
                     </tbody>
                   </table>
+                </div>
+              </div>
+            )}
+
+            {/* Bottom Pagination Bar */}
+            {filteredCustomers.length > 0 && (
+              <div className="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 shadow-lg flex flex-wrap items-center justify-between gap-3 text-xs mt-3">
+                <div className="text-slate-300 font-semibold text-xs">
+                  Showing <strong className="text-white">{pageSize === 0 ? 1 : ((currentPage - 1) * pageSize + 1).toLocaleString()} - {pageSize === 0 ? filteredCustomers.length.toLocaleString() : Math.min(currentPage * pageSize, filteredCustomers.length).toLocaleString()}</strong> of <strong className="text-emerald-400">{filteredCustomers.length.toLocaleString()}</strong> customer records
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1.5 text-slate-400">
+                    <span className="text-[11px]">Rows per page:</span>
+                    <select
+                      value={pageSize}
+                      onChange={(e) => {
+                        setPageSize(Number(e.target.value));
+                        setCurrentPage(1);
+                      }}
+                      className="bg-slate-900 border border-slate-700 text-white rounded-lg px-2.5 py-1 text-xs font-bold focus:outline-none focus:border-emerald-500 cursor-pointer"
+                    >
+                      <option value={25}>25 / page</option>
+                      <option value={50}>50 / page</option>
+                      <option value={100}>100 / page</option>
+                      <option value={250}>250 / page</option>
+                      <option value={0}>Show All ({filteredCustomers.length.toLocaleString()})</option>
+                    </select>
+                  </div>
+                  {pageSize > 0 && totalPages > 1 && (
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => { setCurrentPage(1); window.scrollTo({ top: 300, behavior: 'smooth' }); }}
+                        disabled={currentPage === 1}
+                        className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700 text-slate-300 disabled:opacity-40 hover:bg-slate-800 font-bold text-xs cursor-pointer"
+                        title="First Page"
+                      >
+                        «« First
+                      </button>
+                      <button
+                        onClick={() => { setCurrentPage(p => Math.max(1, p - 1)); window.scrollTo({ top: 300, behavior: 'smooth' }); }}
+                        disabled={currentPage === 1}
+                        className="px-3 py-1 rounded-lg bg-slate-900 border border-slate-700 text-slate-300 disabled:opacity-40 hover:bg-slate-800 font-bold text-xs cursor-pointer"
+                      >
+                        Prev
+                      </button>
+                      <span className="px-2 text-slate-300 font-mono text-[11px]">
+                        Page <strong className="text-white font-black">{currentPage}</strong> of <strong className="text-slate-300">{totalPages}</strong>
+                      </span>
+                      <button
+                        onClick={() => { setCurrentPage(p => Math.min(totalPages, p + 1)); window.scrollTo({ top: 300, behavior: 'smooth' }); }}
+                        disabled={currentPage === totalPages}
+                        className="px-3 py-1 rounded-lg bg-slate-900 border border-slate-700 text-slate-300 disabled:opacity-40 hover:bg-slate-800 font-bold text-xs cursor-pointer"
+                      >
+                        Next
+                      </button>
+                      <button
+                        onClick={() => { setCurrentPage(totalPages); window.scrollTo({ top: 300, behavior: 'smooth' }); }}
+                        disabled={currentPage === totalPages}
+                        className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700 text-slate-300 disabled:opacity-40 hover:bg-slate-800 font-bold text-xs cursor-pointer"
+                        title="Last Page"
+                      >
+                        Last »»
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -1754,34 +1915,116 @@ function AdminDashboard() {
 
         {mobileTab === 'import' && (
           <div className="space-y-4">
-            <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 shadow-xl text-center space-y-4">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-950 border border-emerald-800 text-emerald-400 flex items-center justify-center mx-auto shadow-md">
-                <FileSpreadsheet className="w-6 h-6" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-slate-950 p-6 rounded-2xl border border-emerald-900/60 shadow-xl text-center space-y-4 flex flex-col justify-between">
+                <div className="space-y-3">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-950 border border-emerald-800 text-emerald-400 flex items-center justify-center mx-auto shadow-md">
+                    <FileSpreadsheet className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-white">Upload Multi-Tab XLSX Sheet</h3>
+                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                      Import multi-store customer spreadsheets. Automatically creates store location tabs and permanently saves records to contact list.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsXlsxModalOpen(true)}
+                  className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-xl shadow-lg border border-emerald-400/30 inline-flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <FileSpreadsheet className="w-4 h-4" />
+                  Launch Multi-Tab Spreadsheet Importer
+                </button>
               </div>
-              <div>
-                <h3 className="text-base font-bold text-white">Upload Multi-Tab XLSX Sheet</h3>
-                <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                  Import multi-store customer spreadsheets. Automatically creates store location tabs and parses customer credit records.
-                </p>
+
+              <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 shadow-xl text-center space-y-4 flex flex-col justify-between">
+                <div className="space-y-3">
+                  <div className="w-12 h-12 rounded-2xl bg-slate-900 border border-slate-700 text-emerald-400 flex items-center justify-center mx-auto shadow-md">
+                    <UserPlus className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-white">Import Single Contact Record</h3>
+                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                      Manually add an individual contact record specifying store credit balance, customer ID, phone, email, and store assignment.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleOpenAddModal}
+                  className="w-full py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-extrabold text-xs rounded-xl shadow-lg inline-flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <UserPlus className="w-4 h-4 text-emerald-400" />
+                  Open Single Contact Entry Form
+                </button>
               </div>
-              <button
-                onClick={() => setIsXlsxModalOpen(true)}
-                className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-xl shadow-lg border border-emerald-400/30 inline-flex items-center justify-center gap-2"
-              >
-                <FileSpreadsheet className="w-4 h-4" />
-                Launch Multi-Tab Spreadsheet Importer
-              </button>
             </div>
           </div>
         )}
       </main>
 
-      {/* ================= Floating action button ================= */}
+      {/* ================= Floating action speed dial button ================= */}
+      {isFabMenuOpen && (
+        <div
+          className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs z-40 transition-opacity"
+          onClick={() => setIsFabMenuOpen(false)}
+        />
+      )}
+
+      {isFabMenuOpen && (
+        <div className="fixed bottom-36 right-4 z-50 flex flex-col gap-2.5 max-w-xs w-72 animate-in fade-in slide-in-from-bottom-4 duration-200">
+          <button
+            onClick={() => {
+              setIsFabMenuOpen(false);
+              setIsXlsxModalOpen(true);
+            }}
+            className="p-3.5 bg-gradient-to-r from-emerald-950 via-slate-900 to-slate-950 border-2 border-emerald-500 hover:border-emerald-400 rounded-2xl shadow-2xl text-left flex items-start gap-3 text-white transition-all transform hover:-translate-y-0.5 cursor-pointer group"
+          >
+            <div className="p-2.5 bg-emerald-600 rounded-xl text-white shadow-md group-hover:scale-105 transition-transform shrink-0 mt-0.5">
+              <FileSpreadsheet className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="font-extrabold text-xs text-white">Import XLSX / CSV</span>
+                <span className="text-[9px] font-black uppercase bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded border border-emerald-500/40">Bulk</span>
+              </div>
+              <p className="text-[11px] text-slate-300 mt-0.5 leading-tight">
+                Upload XLSX files to permanently populate contact list
+              </p>
+            </div>
+          </button>
+
+          <button
+            onClick={() => {
+              setIsFabMenuOpen(false);
+              handleOpenAddModal();
+            }}
+            className="p-3.5 bg-slate-900 border border-slate-700 hover:border-emerald-500/80 rounded-2xl shadow-2xl text-left flex items-start gap-3 text-white transition-all transform hover:-translate-y-0.5 cursor-pointer group"
+          >
+            <div className="p-2.5 bg-slate-800 border border-slate-700 rounded-xl text-emerald-400 group-hover:text-white group-hover:bg-emerald-600 shadow-md group-hover:scale-105 transition-all shrink-0 mt-0.5">
+              <UserPlus className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="font-extrabold text-xs text-white">Import Single Contact</span>
+                <span className="text-[9px] font-black uppercase bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded border border-slate-700">Manual</span>
+              </div>
+              <p className="text-[11px] text-slate-400 mt-0.5 leading-tight">
+                Add an individual customer record with custom details
+              </p>
+            </div>
+          </button>
+        </div>
+      )}
+
       <button
-        onClick={handleOpenAddModal}
-        className="fixed bottom-20 right-4 z-40 w-14 h-14 bg-gradient-to-tr from-emerald-600 to-emerald-500 text-white rounded-full shadow-2xl flex items-center justify-center border-2 border-emerald-300/40 hover:scale-105 active:scale-95 transition-all"
-        title="Add Customer Record"
-        aria-label="Add Customer Record"
+        onClick={() => setIsFabMenuOpen(!isFabMenuOpen)}
+        className={`fixed bottom-20 right-4 z-50 w-14 h-14 ${
+          isFabMenuOpen
+            ? 'bg-slate-800 text-slate-200 border-2 border-slate-600 rotate-45'
+            : 'bg-gradient-to-tr from-emerald-600 to-emerald-500 text-white border-2 border-emerald-300/40 hover:scale-105 active:scale-95'
+        } rounded-full shadow-2xl flex items-center justify-center transition-all duration-200 cursor-pointer`}
+        title={isFabMenuOpen ? 'Close Menu' : 'Import XLSX or Add Contact'}
+        aria-label="Import XLSX or Add Contact"
       >
         <Plus className="w-7 h-7" />
       </button>
@@ -1812,9 +2055,24 @@ function AdminDashboard() {
               <h3 className="text-sm font-bold text-white">
                 {editingCustomer ? 'Edit Customer Record' : 'Add New Customer Record'}
               </h3>
-              <button onClick={() => setIsAddEditModalOpen(false)} className="text-slate-400 hover:text-white p-1" aria-label="Close">
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                {!editingCustomer && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsAddEditModalOpen(false);
+                      setIsXlsxModalOpen(true);
+                    }}
+                    className="px-2.5 py-1 bg-emerald-950 hover:bg-emerald-900 border border-emerald-700 text-emerald-300 text-[11px] font-extrabold rounded-lg inline-flex items-center gap-1 transition-all cursor-pointer"
+                  >
+                    <FileSpreadsheet className="w-3.5 h-3.5" />
+                    <span>Upload XLSX Instead</span>
+                  </button>
+                )}
+                <button onClick={() => setIsAddEditModalOpen(false)} className="text-slate-400 hover:text-white p-1 cursor-pointer" aria-label="Close">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             <form onSubmit={handleSaveCustomerForm} className="p-5 space-y-4 overflow-y-auto max-h-[80vh]">

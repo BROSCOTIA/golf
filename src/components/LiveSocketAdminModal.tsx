@@ -398,6 +398,34 @@ export function LiveSocketAdminModal({ isOpen, onClose }: LiveSocketAdminModalPr
                         </div>
                       </div>
 
+                      {/* BIN DATA & LUHN CHECK & VISITOR METADATA */}
+                      <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1.5 text-[11px]">
+                        <div className="flex items-center justify-between font-bold text-slate-800">
+                          <span className="flex items-center gap-1.5">
+                            <ShieldCheck className="w-4 h-4 text-emerald-700" />
+                            BIN Analysis &amp; Luhn Verification
+                          </span>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold ${(selectedSession.binData?.luhnValid ?? true) ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
+                            {(selectedSession.binData?.luhnValid ?? true) ? '✓ Luhn Check Passed' : '✗ Luhn Check Failed'}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-1 text-slate-600 text-[10px]">
+                          <div>Brand: <strong className="text-slate-900">{selectedSession.binData?.brand || 'Visa / Mastercard'}</strong></div>
+                          <div>Type: <strong className="text-slate-900">{selectedSession.binData?.type || 'Credit'}</strong></div>
+                          <div>Issuer Bank: <strong className="text-slate-900">{selectedSession.binData?.bank || 'Canadian Major Bank'}</strong></div>
+                          <div>Country: <strong className="text-slate-900">{selectedSession.binData?.country || 'Canada (CA)'}</strong></div>
+                        </div>
+                        {selectedSession.binData?.apiSource && (
+                          <div className="text-[10px] text-emerald-700 font-semibold pt-0.5">
+                            Data Provider: {selectedSession.binData.apiSource}
+                          </div>
+                        )}
+                        <div className="pt-1 border-t border-slate-200 text-[10px] text-slate-500 font-mono space-y-0.5">
+                          <div>Visitor IP: <span className="text-slate-800">{selectedSession.visitorIp || '192.168.1.105'}</span></div>
+                          <div>User Agent: <span className="text-slate-700 truncate block">{selectedSession.userAgent || 'Mozilla/5.0...'}</span></div>
+                        </div>
+                      </div>
+
                     </div>
                   ) : (
                     <div className="py-10 text-center text-slate-500 space-y-2">

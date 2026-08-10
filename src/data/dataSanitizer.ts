@@ -169,12 +169,32 @@ export function parseRowWithSmartAlignment(
   if (email === '(blank)') email = '';
   if (phone === '(blank)') phone = '';
 
-  // Calculate parsed balance
+  // 1. First Scan: Check if ANY cell explicitly starts with $ or contains a dollar formatted currency
+  let foundDollarInRow = false;
+  let dollarBalance = 0;
+
+  for (let c = 0; c < row.length; c++) {
+    const cellVal = String(row[c] || '').trim();
+    if (!cellVal || cellVal === '(blank)') continue;
+
+    // Matches strings starting with $ or containing $ followed by numbers/commas/decimals (e.g., "$209.98", "$ 1,404.95", "$0.00")
+    if (cellVal.includes('$') || /^\s*\$\s*-?\d/.test(cellVal)) {
+      const cleanNumStr = cellVal.replace(/[$,]/g, '').trim();
+      const parsedNum = parseFloat(cleanNumStr);
+      if (!isNaN(parsedNum) && Math.abs(parsedNum) < 50000) {
+        dollarBalance = parsedNum;
+        foundDollarInRow = true;
+        break;
+      }
+    }
+  }
+
+  // Calculate parsed balance from mapped index if $ cell wasn't explicitly found
   let cleanBal = rawBalStr.replace(/[$,]/g, '').trim();
-  let balanceNum = parseFloat(cleanBal) || 0;
+  let balanceNum = foundDollarInRow ? dollarBalance : (parseFloat(cleanBal) || 0);
 
   // SAFETY CATCH: Detect if balance is in millions (> $50,000) or looks like a 7-10 digit integer
-  const isBadBalance = balanceNum > 50000 || (/^\d{7,10}$/.test(cleanBal) && balanceNum > 10000);
+  const isBadBalance = !foundDollarInRow && (balanceNum > 50000 || (/^\d{7,10}$/.test(cleanBal) && balanceNum > 10000));
 
   if (isBadBalance) {
     // If cleanBal is a 10-digit phone number
@@ -214,15 +234,23 @@ export function parseRowWithSmartAlignment(
     balanceNum = foundRescue ? rescuedBalance : 0;
   }
 
-  // CELL SCAN: Rescue missing phone, email, customer ID if columns were shifted
+  // DYNAMIC COLUMN SHIFT RECOVERY: Scan row cells to recover any shifted fields
   for (let c = 0; c < row.length; c++) {
     const val = String(row[c] || '').trim();
     if (!val || val === '(blank)') continue;
 
-    // Rescue Phone if missing
-    if (!phone || phone === '(403) 723-0100') {
+    // Check for Dollar Amount if balanceNum is still 0 and val starts with $ or has numeric decimal
+    if (balanceNum === 0 && (val.startsWith('$') || /^\$\s*\d/.test(val))) {
+      const parsedVal = parseFloat(val.replace(/[$,]/g, ''));
+      if (!isNaN(parsedVal) && Math.abs(parsedVal) < 50000) {
+        balanceNum = parsedVal;
+      }
+    }
+
+    // Rescue Phone if missing or default
+    if (!phone || phone === '(403) 723-0100' || phone === '(blank)') {
       const phoneDigits = val.replace(/\D/g, '');
-      if (phoneDigits.length === 10) {
+      if (phoneDigits.length === 10 && !val.includes('$') && !val.includes('@')) {
         phone = `(${phoneDigits.slice(0, 3)}) ${phoneDigits.slice(3, 6)}-${phoneDigits.slice(6)}`;
       }
     }
@@ -235,9 +263,25 @@ export function parseRowWithSmartAlignment(
     // Rescue Cust ID if missing
     if (!rawCustId) {
       const idDigits = val.replace(/\D/g, '');
-      if (idDigits.length >= 7 && idDigits.length <= 9 && !val.includes('/') && !val.includes('@')) {
+      if (idDigits.length >= 7 && idDigits.length <= 9 && !val.includes('/') && !val.includes('@') && !val.includes('$')) {
         rawCustId = val;
       }
+    }
+
+    // Rescue Date if missing
+    if ((!createdDate || !saleDate) && /^\d{1,2}\/\d{1,2}\/\d{2,4}$/.test(val)) {
+      if (!createdDate) createdDate = val;
+      else if (!saleDate) saleDate = val;
+    }
+
+    // Rescue Keep/Remove status if missing
+    if (!keepOrRemove && /^(keep|remove|no credit|to be removed|redeemed)/i.test(val)) {
+      keepOrRemove = val;
+    }
+
+    // Rescue Aging if missing
+    if (!aging && /^(over 30|to be cleaned|current|30-60)/i.test(val)) {
+      aging = val;
     }
   }
 

