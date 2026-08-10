@@ -162,15 +162,10 @@ function AdminDashboard() {
     if (saved) {
       try {
         const parsed: StoreLocation[] = JSON.parse(saved);
-        const filtered = parsed.filter(s => s.id !== '505');
-        if (!filtered.some(s => s.id === '504')) {
-          const s504 = GOLF_TOWN_STORES.find(s => s.id === '504');
-          if (s504) filtered.unshift(s504);
-        }
-        return filtered;
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       } catch { /* fallback below */ }
     }
-    return GOLF_TOWN_STORES.filter(s => s.id !== '505');
+    return GOLF_TOWN_STORES;
   });
 
   // ---- Data: Customers ----
@@ -179,24 +174,26 @@ function AdminDashboard() {
     if (saved) {
       try {
         const parsed: CustomerRecord[] = JSON.parse(saved);
-        const cleaned = parsed.filter(c => c.storeId !== '505').map(c => ({
-          ...c,
-          city: c.city || DEFAULT_CITY,
-          phone: c.phone && c.phone !== '(blank)' ? c.phone : DEFAULT_PHONE
-        }));
-        if (cleaned.length > 0) return sanitizeCustomerRecords(cleaned);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const cleaned = parsed.map(c => ({
+            ...c,
+            city: c.city || DEFAULT_CITY,
+            phone: c.phone && c.phone !== '(blank)' ? c.phone : DEFAULT_PHONE
+          }));
+          return sanitizeCustomerRecords(cleaned);
+        }
       } catch { /* fallback below */ }
     }
-    const initial504 = INITIAL_CUSTOMERS.filter(c => c.storeId === '504').map(c => ({
+    const initialAll = INITIAL_CUSTOMERS.map(c => ({
       ...c,
       city: c.city || DEFAULT_CITY,
       phone: c.phone && c.phone !== '(blank)' ? c.phone : DEFAULT_PHONE
     }));
-    return sanitizeCustomerRecords(initial504);
+    return sanitizeCustomerRecords(initialAll);
   });
 
   // ---- Filters & UI state ----
-  const [selectedStoreId, setSelectedStoreId] = useState<string>('504');
+  const [selectedStoreId, setSelectedStoreId] = useState<string>('All');
   const [selectedQuarterYear, setSelectedQuarterYear] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGender, setSelectedGender] = useState<FilterGender>('All');
@@ -206,7 +203,7 @@ function AdminDashboard() {
   const [mobileTab, setMobileTab] = useState<'contacts' | 'stores' | 'stats' | 'import'>('contacts');
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [showAllRecords, setShowAllRecords] = useState(false);
+  const [showAllRecords, setShowAllRecords] = useState(true);
 
   // ---- Modals ----
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
@@ -264,17 +261,15 @@ function AdminDashboard() {
   const handleSaveCustomers = (newCustomers: CustomerRecord[]) => {
     setCustomers(newCustomers);
     safeStorage.setItem('multi_store_customers', JSON.stringify(newCustomers));
-    if (saveTimeoutRef.current !== null) window.clearTimeout(saveTimeoutRef.current);
-    saveTimeoutRef.current = window.setTimeout(() => {
-      fetch('/api/customers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ customers: newCustomers })
-      })
-        .then(res => res.json())
-        .then(data => console.log('[Auto-Save] Backend synchronized:', data))
-        .catch(err => console.error('Failed to debounced sync customers:', err));
-    }, 2000);
+    
+    fetch('/api/customers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ customers: newCustomers })
+    })
+      .then(res => res.json())
+      .then(data => console.log('[Save] Backend synchronized permanently:', data))
+      .catch(err => console.error('Failed to sync customers to backend:', err));
   };
 
   const handleSaveStores = (newStores: StoreLocation[]) => {
@@ -282,21 +277,48 @@ function AdminDashboard() {
     safeStorage.setItem('store_locations_list', JSON.stringify(newStores));
   };
 
-  // Sync customers to backend on load
+  // Fetch permanent customers list from backend on mount
   useEffect(() => {
-    if (customers && customers.length > 0) {
-      fetch('/api/customers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ customers })
-      }).catch(err => console.error('Initial sync failed:', err));
-    }
+    fetch('/api/customers')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && Array.isArray(data.customers) && data.customers.length > 0) {
+          const cleaned = data.customers.map((c: any) => ({
+            ...c,
+            city: c.city || DEFAULT_CITY,
+            phone: c.phone && c.phone !== '(blank)' ? c.phone : DEFAULT_PHONE
+          }));
+          const sanitized = sanitizeCustomerRecords(cleaned);
+          setCustomers(sanitized);
+          safeStorage.setItem('multi_store_customers', JSON.stringify(sanitized));
+          console.log(`[App Mount] Loaded ${sanitized.length} permanent records from backend.`);
+        } else if (customers.length > 0) {
+          fetch('/api/customers', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ customers })
+          }).catch(err => console.error('Initial sync failed:', err));
+        }
+      })
+      .catch(err => console.error('Failed to fetch customers from backend server:', err));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ---- Derived data ----
   const currentStoreObj = useMemo<StoreLocation>(() => {
-    if (selectedStoreId === 'All') return stores[0] || GOLF_TOWN_STORES[0];
+    if (selectedStoreId === 'All') {
+      return {
+        id: 'ALL',
+        name: 'All Golf Town Locations',
+        code: 'ALL',
+        address: 'National Store Network',
+        city: 'All Stores (Canada)',
+        province: 'CA',
+        phone: DEFAULT_PHONE,
+        postalCode: 'T2J 3R1',
+        googleMapsUrl: 'https://www.google.com/maps/search/?api=1&query=Golf+Town+Canada'
+      };
+    }
     return stores.find(s => s.id === selectedStoreId)
       || GOLF_TOWN_STORES.find(s => s.id === selectedStoreId)
       || {
@@ -323,7 +345,6 @@ function AdminDashboard() {
 
   const filteredCustomers = useMemo(() => {
     return customers.filter(c => {
-      if (c.storeId === '505' && selectedStoreId !== '505') return false;
       if (selectedStoreId !== 'All' && c.storeId !== selectedStoreId) return false;
       if (selectedQuarterYear !== 'All' && c.quarterYearKey !== selectedQuarterYear) return false;
 
@@ -1185,13 +1206,23 @@ function AdminDashboard() {
                   </h2>
                 </div>
               </div>
-              <button
-                onClick={() => handleOpenMapForStore(currentStoreObj)}
-                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow transition-all inline-flex items-center gap-1 shrink-0"
-              >
-                <Navigation className="w-3.5 h-3.5" />
-                Map
-              </button>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => setIsXlsxModalOpen(true)}
+                  className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white font-extrabold text-xs rounded-xl shadow transition-all inline-flex items-center gap-1.5 border border-emerald-500 cursor-pointer"
+                  title="Upload & Permanently Save XLSX Spreadsheet"
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5" />
+                  <span>Upload XLSX</span>
+                </button>
+                <button
+                  onClick={() => handleOpenMapForStore(currentStoreObj)}
+                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl shadow transition-all inline-flex items-center gap-1 border border-slate-700 cursor-pointer"
+                >
+                  <Navigation className="w-3.5 h-3.5" />
+                  <span>Map</span>
+                </button>
+              </div>
             </div>
 
             {/* Select all bar */}
