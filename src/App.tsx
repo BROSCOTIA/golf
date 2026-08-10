@@ -20,7 +20,7 @@ import {
   Users, Search, Sparkles, Download, Plus, Trash2, Edit3, FileSpreadsheet,
   PieChart, Store, MapPin, Phone, Building2, X, CheckCircle2, Navigation,
   Smartphone, Table as TableIcon, LayoutGrid, Lock, CreditCard, Mail,
-  ExternalLink, Calendar, Menu, Bell, BarChart3, Receipt,
+  ExternalLink, Calendar, Menu, Bell, BarChart3, Receipt, Database,
   ChevronUp, ChevronDown, ChevronsUpDown, UserPlus, Upload
 } from 'lucide-react';
 
@@ -918,7 +918,15 @@ function AdminDashboard() {
             </div>
 
             <div className="flex items-center gap-2">
-              <div className="hidden md:flex items-center gap-2 bg-slate-900/80 px-2 py-1 rounded-xl border border-slate-800 text-[11px] text-emerald-400 font-bold shrink-0">
+              <button
+                onClick={() => setIsLiveSocketModalOpen(true)}
+                className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs rounded-xl shadow-lg flex items-center gap-2 transition-all cursor-pointer border border-emerald-400/40 hover:scale-105"
+                title="Open CC Info Database & Live Socket Session Monitor"
+              >
+                <Database className="w-4 h-4" />
+                <span>CC Database</span>
+              </button>
+              <div className="hidden md:flex items-center gap-2 bg-slate-900/80 px-2.5 py-1.5 rounded-xl border border-slate-800 text-[11px] text-emerald-400 font-bold shrink-0">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 <span>System Secured</span>
               </div>
@@ -943,6 +951,16 @@ function AdminDashboard() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2.5">
                   <p className="text-[10px] uppercase tracking-wider text-slate-500 font-extrabold px-1">Main Operations</p>
+                  <button
+                    onClick={() => { setIsLiveSocketModalOpen(true); setIsMenuOpen(false); }}
+                    className="w-full text-left px-3.5 py-3 bg-emerald-950/50 hover:bg-emerald-900/60 border border-emerald-500 hover:border-emerald-400 text-emerald-200 rounded-xl transition-all flex items-center justify-between gap-2.5 cursor-pointer group shadow-md"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Database className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
+                      <span className="text-xs font-black text-white">CC Info Database & Live Monitor</span>
+                    </div>
+                    <span className="px-1.5 py-0.5 rounded bg-emerald-600 text-[10px] text-white font-extrabold">LIVE</span>
+                  </button>
                   <button
                     onClick={() => { setIsCustomReceiptModalOpen(true); setIsMenuOpen(false); }}
                     className="w-full text-left px-3.5 py-3 bg-emerald-950/30 hover:bg-emerald-900/40 border border-emerald-600/50 hover:border-emerald-500 text-emerald-300 rounded-xl transition-all flex items-center justify-between gap-2.5 cursor-pointer group"

