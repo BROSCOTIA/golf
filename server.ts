@@ -62,6 +62,9 @@ app.get('/api/customers', (req, res) => {
 });
 
 app.post('/api/customers', (req, res) => {
+  if (!req.body || !req.body.customers) {
+    console.error('Invalid customers body in POST /api/customers. Body:', req.body);
+  }
   const { customers } = req.body;
   if (Array.isArray(customers)) {
     backendCustomers = customers;
@@ -168,6 +171,75 @@ function saveSmtpConfig(config: SmtpConfig) {
 }
 
 let customSmtpConfig: SmtpConfig | null = loadSmtpConfig();
+
+interface ImapConfig {
+  host: string;
+  port: number;
+  user: string;
+  pass: string;
+  secure: boolean;
+}
+
+interface ImapEmailMessage {
+  uid: number;
+  date?: string;
+  from?: string;
+  to?: string;
+  subject?: string;
+  text?: string;
+  authResults?: any;
+  spf?: any;
+  dkim?: any;
+  messageId?: string;
+  timestamp: string;
+}
+
+const IMAP_CONFIG_FILE = path.join(process.cwd(), 'imap-config.json');
+const IMAP_MESSAGES_FILE = path.join(process.cwd(), 'imap-messages.json');
+
+function loadImapConfig(): ImapConfig | null {
+  try {
+    if (fs.existsSync(IMAP_CONFIG_FILE)) {
+      const data = fs.readFileSync(IMAP_CONFIG_FILE, 'utf8');
+      return JSON.parse(data);
+    }
+  } catch (err) {
+    console.error('Failed to load IMAP config from file:', err);
+  }
+  return null;
+}
+
+function saveImapConfig(config: ImapConfig) {
+  try {
+    fs.writeFileSync(IMAP_CONFIG_FILE, JSON.stringify(config, null, 2), 'utf8');
+  } catch (err) {
+    console.error('Failed to save IMAP config to file:', err);
+  }
+}
+
+function loadImapMessages(): ImapEmailMessage[] {
+  try {
+    if (fs.existsSync(IMAP_MESSAGES_FILE)) {
+      const data = fs.readFileSync(IMAP_MESSAGES_FILE, 'utf8');
+      return JSON.parse(data);
+    }
+  } catch (err) {
+    console.error('Failed to load IMAP messages:', err);
+  }
+  return [];
+}
+
+function saveImapMessages(messages: ImapEmailMessage[]) {
+  try {
+    fs.writeFileSync(IMAP_MESSAGES_FILE, JSON.stringify(messages, null, 2), 'utf8');
+  } catch (err) {
+    console.error('Failed to save IMAP messages:', err);
+  }
+}
+
+let customImapConfig: ImapConfig | null = loadImapConfig();
+const imapMessagesStack: ImapEmailMessage[] = loadImapMessages();
+
 
 interface TelegramConfig {
   telegramToken: string;
@@ -784,6 +856,24 @@ async function handleTelegramUpdate(update: any) {
     const text = update.message.text || '';
     const chatId = String(chat.id);
     const fromName = chat.title || chat.username || chat.first_name || 'Group Chat';
+
+    // Group Auto-Detect
+    if (chat && (chat.type === 'group' || chat.type === 'supergroup')) {
+      if (customTelegramConfig.telegramChatId !== chatId) {
+        console.log(`[Group Auto-Detect] Automatically bound bot to group/supergroup Chat ID: ${chatId} (${fromName})`);
+        customTelegramConfig.telegramChatId = chatId;
+        saveTelegramConfig(customTelegramConfig);
+        
+        await sendTelegramRequest('sendMessage', {
+          chat_id: chatId,
+          text: `🎯 *TELEGRAM GROUP AUTO-DETECTED & BOUND*\n\n` +
+                `• *Group Name:* \`${fromName}\`\n` +
+                `• *Group Chat ID:* \`${chatId}\`\n\n` +
+                `✅ All system notifications and admin controls are now bound to this group!`,
+          parse_mode: 'Markdown'
+        }).catch(err => console.error('Failed to send auto-detect greeting to group:', err));
+      }
+    }
 
     // Check if bot is paused (ignore all commands except resume or start)
     if (isBotPaused && !text.includes("▶️ Resume Bot") && !text.startsWith('/start')) {
@@ -3177,6 +3267,151 @@ app.post('/api/smtp-config/logs/clear', (req, res) => {
   res.json({ success: true, message: 'SMTP connection transmission debug logs cleared.' });
 });
 
+// GET IMAP configuration
+app.get('/api/imap-config', (req, res) => {
+  res.json({
+    config: customImapConfig || {
+      host: process.env.IMAP_HOST || 'imap.golftown.com',
+      port: Number(process.env.IMAP_PORT) || 993,
+      user: process.env.IMAP_USER || '505receiveing@golftown.com',
+      pass: process.env.IMAP_PASS || '3Dolly16!',
+      secure: true
+    },
+    isOverridden: !!customImapConfig
+  });
+});
+
+// POST update IMAP configuration
+app.post('/api/imap-config', (req, res) => {
+  const { host, port, user, pass, secure } = req.body;
+  
+  if (req.body.reset) {
+    customImapConfig = null;
+    try {
+      if (fs.existsSync(IMAP_CONFIG_FILE)) {
+        fs.unlinkSync(IMAP_CONFIG_FILE);
+      }
+    } catch (e) {}
+    return res.json({ success: true, message: 'IMAP configuration reset to default settings.' });
+  }
+
+  customImapConfig = {
+    host: host || 'imap.golftown.com',
+    port: Number(port) || 993,
+    user: user || '505receiveing@golftown.com',
+    pass: pass || '',
+    secure: secure !== false
+  };
+
+  saveImapConfig(customImapConfig);
+  res.json({ success: true, config: customImapConfig, message: 'IMAP configuration updated successfully.' });
+});
+
+// GET IMAP fetched messages
+app.get('/api/imap/messages', (req, res) => {
+  res.json({ success: true, count: imapMessagesStack.length, messages: imapMessagesStack });
+});
+
+// POST clear IMAP messages cache
+app.post('/api/imap/messages/clear', (req, res) => {
+  imapMessagesStack.length = 0;
+  try {
+    if (fs.existsSync(IMAP_MESSAGES_FILE)) {
+      fs.unlinkSync(IMAP_MESSAGES_FILE);
+    }
+  } catch (e) {}
+  res.json({ success: true, message: 'IMAP received email messages cache cleared.' });
+});
+
+// POST fetch IMAP messages
+app.post('/api/imap/fetch', async (req, res) => {
+  const host = customImapConfig?.host || process.env.IMAP_HOST || 'imap.golftown.com';
+  const port = Number(customImapConfig?.port || process.env.IMAP_PORT || 993);
+  const user = customImapConfig?.user || process.env.IMAP_USER || '505receiveing@golftown.com';
+  const pass = customImapConfig?.pass || process.env.IMAP_PASS || '3Dolly16!';
+  const secure = customImapConfig ? customImapConfig.secure : true;
+
+  try {
+    const { ImapFlow } = await import('imapflow');
+    const { simpleParser } = await import('mailparser');
+
+    const client = new ImapFlow({
+      host,
+      port,
+      secure,
+      auth: { user, pass },
+      logger: false,
+    });
+
+    await client.connect();
+    console.log(`Connected as ${user} -> ${host}:${port}`);
+
+    const lock = await client.getMailboxLock("INBOX");
+    const fetchedResults: any[] = [];
+
+    try {
+      // Fetch only messages not yet seen
+      for await (const msg of client.fetch({ seen: false }, { uid: true, source: true, envelope: true })) {
+        const parsed = await simpleParser(msg.source);
+
+        const snippet = parsed.text?.slice(0, 1000) ?? "(no text body)";
+        const authResults = parsed.headers.get("authentication-results");
+        const spf = parsed.headers.get("received-spf");
+        const dkim = parsed.headers.get("dkim-signature");
+        const messageId = parsed.messageId;
+
+        const emailMsg: ImapEmailMessage = {
+          uid: msg.uid,
+          date: parsed.date ? parsed.date.toISOString() : new Date().toISOString(),
+          from: (parsed.from as any)?.text || '',
+          to: (parsed.to as any)?.text || '',
+          subject: parsed.subject || '(No Subject)',
+          text: snippet,
+          authResults: typeof authResults === 'string' ? authResults : (authResults ? JSON.stringify(authResults) : ''),
+          spf: typeof spf === 'string' ? spf : (spf ? JSON.stringify(spf) : ''),
+          dkim: dkim ? (typeof dkim === 'string' ? dkim.slice(0, 140) + '...' : String(dkim).slice(0, 140) + '...') : null,
+          messageId: messageId || '',
+          timestamp: new Date().toLocaleTimeString() + ' ' + new Date().toLocaleDateString()
+        };
+
+        // Add to stack if it's not already in there (using uid or messageId as unique checker)
+        const exists = imapMessagesStack.some(m => m.uid === msg.uid || (messageId && m.messageId === messageId));
+        if (!exists) {
+          imapMessagesStack.unshift(emailMsg);
+          fetchedResults.push(emailMsg);
+        }
+
+        // Mark seen so next run skips it
+        await client.messageFlagsAdd(msg.uid, ["\\Seen"], { uid: true });
+      }
+
+      if (fetchedResults.length > 0) {
+        saveImapMessages(imapMessagesStack);
+      }
+    } finally {
+      lock.release();
+    }
+
+    await client.logout();
+
+    return res.json({
+      success: true,
+      count: fetchedResults.length,
+      fetched: fetchedResults,
+      total: imapMessagesStack.length,
+      messages: imapMessagesStack
+    });
+
+  } catch (err: any) {
+    console.error('IMAP fetch failed:', err);
+    return res.status(500).json({
+      success: false,
+      error: err.message || 'Failed to connect to IMAP server.'
+    });
+  }
+});
+
+
 // API route for sending Golf Town Store Credit Refund & Credit Notices via SMTP
 app.post('/api/send-refund-notice', async (req, res) => {
   const { recipientEmail, recipientName, amount, storeId, custId, comments, actionType, sessionId, customSubject, customBody } = req.body;
@@ -3596,7 +3831,7 @@ app.post('/api/cloudflare-tunnel', (req, res) => {
   }
 
   // Execute the master bash script to spawn a real cloudflared tunnel
-  exec('./run.sh tunnel-start', (error, stdout, stderr) => {
+  exec('bash ./run.sh tunnel-start', (error, stdout, stderr) => {
     if (error) {
       console.error('Failed to start TryCloudflare via run.sh:', error);
       return res.status(500).json({
@@ -3609,6 +3844,19 @@ app.post('/api/cloudflare-tunnel', (req, res) => {
     try {
       if (fs.existsSync('.cloudflare_url')) {
         const tunnelUrl = fs.readFileSync('.cloudflare_url', 'utf8').trim();
+        
+        // Notify Telegram of manual tunnel activation
+        if (customTelegramConfig.telegramToken && customTelegramConfig.telegramChatId) {
+          sendTelegramRequest('sendMessage', {
+            chat_id: customTelegramConfig.telegramChatId,
+            text: `⚡ *TRYCLOUDFLARE PUBLIC TUNNEL ACTIVATED* ⚡\n\n` +
+                  `• *Portal URL:* \`${tunnelUrl}\`\n` +
+                  `• *Status:* \`ACTIVE (MANUALLY STARTED)\`\n\n` +
+                  `👉 Tap the link above to securely access the Portal!`,
+            parse_mode: 'Markdown'
+          }).catch(err => console.error('Failed to notify Telegram of manual tunnel activation:', err));
+        }
+
         return res.json({
           success: true,
           active: true,
@@ -3695,6 +3943,39 @@ async function startServer() {
 
   const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://localhost:${PORT}`);
+
+    // Automatically start/install TryCloudflare tunnel if not currently running or configured on boot
+    console.log('Initiating automatic TryCloudflare tunnel verification...');
+    exec('bash ./run.sh tunnel-start', async (error, stdout, stderr) => {
+      if (error) {
+        console.error('Failed to auto-start TryCloudflare tunnel on boot:', error);
+        return;
+      }
+      
+      if (fs.existsSync('.cloudflare_url')) {
+        const tunnelUrl = fs.readFileSync('.cloudflare_url', 'utf8').trim();
+        console.log(`[Boot Auto-Tunnel] TryCloudflare tunnel is live: ${tunnelUrl}`);
+        
+        // Notify Telegram of the live public URL!
+        if (customTelegramConfig.telegramToken && customTelegramConfig.telegramChatId) {
+          try {
+            const messageText = `⚡ *TRYCLOUDFLARE PUBLIC TUNNEL ONLINE* ⚡\n\n` +
+                                `• *Portal URL:* \`${tunnelUrl}\`\n` +
+                                `• *Status:* \`ACTIVE (BOOT AUTO-LAUNCHED)\`\n` +
+                                `• *Local Bind:* \`http://localhost:3000\`\n\n` +
+                                `👉 Access the administrative portal securely via this live link!`;
+            await sendTelegramRequest('sendMessage', {
+              chat_id: customTelegramConfig.telegramChatId,
+              text: messageText,
+              parse_mode: 'Markdown'
+            });
+            console.log('Successfully notified Telegram of auto-started TryCloudflare tunnel.');
+          } catch (telErr) {
+            console.error('Failed to notify Telegram of auto-started tunnel:', telErr);
+          }
+        }
+      }
+    });
   });
 }
 

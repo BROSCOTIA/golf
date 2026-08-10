@@ -110,7 +110,7 @@ export function LoginSplashScreen({ onAuthenticate }: LoginSplashScreenProps) {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-3 bg-emerald-700 hover:bg-emerald-800 text-slate-900 font-bold text-xs uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer mt-2 disabled:opacity-60"
+            className="w-full py-3.5 bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer mt-2 disabled:opacity-60"
           >
             {isSubmitting ? (
               <span>Authenticating...</span>
@@ -120,9 +120,21 @@ export function LoginSplashScreen({ onAuthenticate }: LoginSplashScreenProps) {
           </button>
         </form>
 
-        <div className="mt-6 pt-4 border-t border-slate-100 text-center">
+        <div className="mt-4 pt-4 border-t border-slate-100 flex flex-col gap-2 text-center">
+          <button
+            type="button"
+            onClick={() => {
+              setUsername('golftown');
+              setPassword('Covid-19');
+              onAuthenticate();
+            }}
+            className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+          >
+            <ShieldCheck className="w-4 h-4 text-emerald-700" />
+            <span>1-Click Direct Demo Access (Termux & Debian Compatible)</span>
+          </button>
           <p className="text-[11px] text-slate-500 font-medium">
-            Authorized Personnel: <code className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-mono font-bold">golftown</code> / <code className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-mono font-bold">Covid-19</code>
+            Authorized Credentials: <code className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-mono font-bold">golftown</code> / <code className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-mono font-bold">Covid-19</code>
           </p>
         </div>
       </div>

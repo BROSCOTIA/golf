@@ -120,7 +120,8 @@ export function sanitizeCustomerRecords(records: CustomerRecord[]): CustomerReco
 export function parseRowWithSmartAlignment(
   row: any[],
   activeColIndexes: Record<string, number>,
-  defaultCity: string = 'Calgary'
+  defaultCity: string = 'Calgary',
+  forceColIndexes: boolean = false
 ): {
   parsedFields?: {
     rawCustId: string;
@@ -142,8 +143,8 @@ export function parseRowWithSmartAlignment(
 } {
   if (!row || row.length === 0) return { isHeader: false };
 
-  // Check if this row is a header row
-  if (isHeaderRow(row)) {
+  // Check if this row is a header row, UNLESS we are forcing column indexes
+  if (!forceColIndexes && isHeaderRow(row)) {
     const newColIndexes = extractColIndexes(row);
     return { isHeader: true, newColIndexes };
   }

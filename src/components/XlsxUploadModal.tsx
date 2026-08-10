@@ -3,8 +3,8 @@ import * as XLSX from 'xlsx';
 import { CustomerRecord, StoreLocation } from '../types';
 import { GOLF_TOWN_STORES, findGolfTownStore } from '../data/golfTownStores';
 import { guessGender } from '../data/initialData';
-import { parseRowWithSmartAlignment, sanitizeCustomerRecord } from '../data/dataSanitizer';
-import { Upload, FileSpreadsheet, Check, MapPin, Store, AlertCircle, X, ChevronRight, Sparkles, ShieldCheck } from 'lucide-react';
+import { parseRowWithSmartAlignment, sanitizeCustomerRecord, isHeaderRow, extractColIndexes } from '../data/dataSanitizer';
+import { Upload, FileSpreadsheet, Check, MapPin, Store, AlertCircle, X, ChevronRight, Sparkles, ShieldCheck, ArrowRight } from 'lucide-react';
 
 interface SheetParsedData {
   sheetName: string;
@@ -22,6 +22,18 @@ interface XlsxUploadModalProps {
   existingStores: StoreLocation[];
 }
 
+const INTERNAL_FIELDS = [
+  { key: 'firstName', label: 'First Name (Required)', required: true },
+  { key: 'lastName', label: 'Last Name (Required)', required: true },
+  { key: 'custId', label: 'Customer ID', required: false },
+  { key: 'balance', label: 'Store Credit Balance', required: true },
+  { key: 'email', label: 'Email Address', required: false },
+  { key: 'phone', label: 'Phone Number', required: false },
+  { key: 'company', label: 'Company Name', required: false },
+  { key: 'city', label: 'City', required: false },
+  { key: 'comments', label: 'Comments / Notes', required: false },
+];
+
 export const XlsxUploadModal: React.FC<XlsxUploadModalProps> = ({
   isOpen,
   onClose,
@@ -33,6 +45,12 @@ export const XlsxUploadModal: React.FC<XlsxUploadModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [activeTabIdx, setActiveTabIdx] = useState<number>(0);
 
+  // Mapping state
+  const [step, setStep] = useState<'upload' | 'mapping' | 'review'>('upload');
+  const [workbookData, setWorkbookData] = useState<XLSX.WorkBook | null>(null);
+  const [extractedHeaders, setExtractedHeaders] = useState<string[]>([]);
+  const [columnMapping, setColumnMapping] = useState<Record<string, number>>({});
+
   if (!isOpen) return null;
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -40,7 +58,7 @@ export const XlsxUploadModal: React.FC<XlsxUploadModalProps> = ({
     if (!files || files.length === 0) return;
     const selectedFile = files[0];
     setFile(selectedFile);
-    await processWorkbook(selectedFile);
+    await loadWorkbookForMapping(selectedFile);
   };
 
   const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
@@ -48,16 +66,75 @@ export const XlsxUploadModal: React.FC<XlsxUploadModalProps> = ({
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const selectedFile = e.dataTransfer.files[0];
       setFile(selectedFile);
-      await processWorkbook(selectedFile);
+      await loadWorkbookForMapping(selectedFile);
     }
   };
 
-  const processWorkbook = async (fileToProcess: File) => {
+  const loadWorkbookForMapping = async (fileToProcess: File) => {
     setLoading(true);
     try {
       const arrayBuffer = await fileToProcess.arrayBuffer();
       const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+      setWorkbookData(workbook);
 
+      let headers: string[] = [];
+      if (workbook.SheetNames.length > 0) {
+        const firstSheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[firstSheetName];
+        const rows: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+
+        for (const row of rows) {
+          if (isHeaderRow(row)) {
+            headers = row.map(c => String(c || '').trim());
+            break;
+          }
+        }
+        
+        // Fallback if no header row clearly detected
+        if (headers.length === 0) {
+          for (const row of rows) {
+            if (row.length > 0 && row.some(c => String(c).trim() !== '')) {
+              headers = row.map(c => String(c || '').trim());
+              break;
+            }
+          }
+        }
+      }
+
+      setExtractedHeaders(headers);
+      const initialMapping = extractColIndexes(headers);
+      setColumnMapping(initialMapping);
+      setStep('mapping');
+
+    } catch (err) {
+      console.error('Error reading workbook:', err);
+      alert('Failed to read XLSX file.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const proceedToProcessing = async () => {
+    if (!workbookData) return;
+    await processWorkbook(workbookData, columnMapping);
+  };
+
+  const handleMappingChange = (internalKey: string, headerIndexStr: string) => {
+    setColumnMapping(prev => {
+      const newMapping = { ...prev };
+      if (headerIndexStr === '') {
+        delete newMapping[internalKey];
+      } else {
+        newMapping[internalKey] = parseInt(headerIndexStr, 10);
+      }
+      return newMapping;
+    });
+  };
+
+  const processWorkbook = async (workbook: XLSX.WorkBook, finalMapping: Record<string, number>) => {
+    setLoading(true);
+    setStep('review');
+    try {
       const sheetResults: SheetParsedData[] = [];
 
       for (const sheetName of workbook.SheetNames) {
@@ -77,20 +154,17 @@ export const XlsxUploadModal: React.FC<XlsxUploadModalProps> = ({
         const storeName = matchedStore ? matchedStore.name : `Store ${storeId} - Golf Town Location`;
         const storeCity = matchedStore ? matchedStore.city : 'Calgary';
 
-        // Parse customer rows dynamically across all sections of the sheet
         const records: CustomerRecord[] = [];
-        let currentColIndexes: Record<string, number> = {};
+
+        // Apply finalMapping across the entire workbook
+        const activeColIndexes = { ...finalMapping };
 
         for (let i = 0; i < rows.length; i++) {
           const row = rows[i];
           if (!row || row.length === 0) continue;
 
-          const parsed = parseRowWithSmartAlignment(row, currentColIndexes, storeCity);
-
-          if (parsed.isHeader && parsed.newColIndexes) {
-            currentColIndexes = parsed.newColIndexes;
-            continue;
-          }
+          // Pass true for forceColIndexes so it doesn't re-detect headers and overwrite our mapped columns
+          const parsed = parseRowWithSmartAlignment(row, activeColIndexes, storeCity, true);
 
           if (!parsed.parsedFields) continue;
 
@@ -237,7 +311,7 @@ export const XlsxUploadModal: React.FC<XlsxUploadModalProps> = ({
         {/* Content */}
         <div className="p-6 overflow-y-auto flex-1 space-y-6">
           {/* File Upload Zone */}
-          {!file || parsedSheets.length === 0 ? (
+          {step === 'upload' && (
             <div
               onDragOver={(e) => e.preventDefault()}
               onDrop={handleDrop}
@@ -268,7 +342,57 @@ export const XlsxUploadModal: React.FC<XlsxUploadModalProps> = ({
                 Select Excel File
               </label>
             </div>
-          ) : (
+          )}
+          
+          {/* Mapping Step */}
+          {step === 'mapping' && (
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5">
+                <h4 className="text-emerald-900 font-black text-lg mb-2">Column Mapping</h4>
+                <p className="text-emerald-700 text-sm">
+                  We extracted the following headers from your file. Please match them to the correct system fields before processing.
+                </p>
+              </div>
+
+              <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-black uppercase tracking-widest text-[10px]">
+                    <tr>
+                      <th className="px-6 py-4 w-1/3">System Field</th>
+                      <th className="px-6 py-4">Your Spreadsheet Column</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {INTERNAL_FIELDS.map((field) => (
+                      <tr key={field.key} className="hover:bg-slate-50/50">
+                        <td className="px-6 py-4">
+                          <span className="font-bold text-slate-800">{field.label}</span>
+                          {field.required && <span className="ml-2 text-rose-500 font-black">*</span>}
+                        </td>
+                        <td className="px-6 py-4">
+                          <select
+                            value={columnMapping[field.key] !== undefined ? columnMapping[field.key] : ''}
+                            onChange={(e) => handleMappingChange(field.key, e.target.value)}
+                            className="w-full max-w-md px-4 py-2 bg-white border border-slate-300 rounded-xl text-slate-700 font-medium focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none"
+                          >
+                            <option value="">-- Ignore / Do Not Map --</option>
+                            {extractedHeaders.map((header, idx) => (
+                              <option key={idx} value={idx}>
+                                Column {idx + 1}: {header || '(Empty)'}
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Review Step */}
+          {step === 'review' && parsedSheets.length > 0 && (
             <div className="space-y-6">
               {/* File Info Bar */}
               <div className="flex items-center justify-between p-5 bg-slate-50 rounded-2xl border border-slate-200 shadow-sm">
@@ -277,25 +401,33 @@ export const XlsxUploadModal: React.FC<XlsxUploadModalProps> = ({
                     <FileSpreadsheet className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="text-sm font-black text-slate-900">{file.name}</p>
+                    <p className="text-sm font-black text-slate-900">{file?.name}</p>
                     <p className="text-xs text-slate-500 font-bold">
                       Found {parsedSheets.length} sheet tabs • {parsedSheets.reduce((sum, s) => sum + s.records.length, 0)} total records
                     </p>
                   </div>
                 </div>
-                <label
-                  htmlFor="xlsx-file-input-change"
-                  className="px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold rounded-xl shadow-xs cursor-pointer transition-all active:scale-95"
-                >
-                  Change File
-                  <input
-                    type="file"
-                    accept=".xlsx,.xls,.csv"
-                    onChange={handleFileChange}
-                    className="hidden"
-                    id="xlsx-file-input-change"
-                  />
-                </label>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setStep('mapping')}
+                    className="px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold rounded-xl shadow-xs cursor-pointer transition-all active:scale-95"
+                  >
+                    Edit Mapping
+                  </button>
+                  <label
+                    htmlFor="xlsx-file-input-change"
+                    className="px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold rounded-xl shadow-xs cursor-pointer transition-all active:scale-95"
+                  >
+                    Change File
+                    <input
+                      type="file"
+                      accept=".xlsx,.xls,.csv"
+                      onChange={handleFileChange}
+                      className="hidden"
+                      id="xlsx-file-input-change"
+                    />
+                  </label>
+                </div>
               </div>
 
               {/* Sheet Tabs Navigation */}
@@ -420,10 +552,18 @@ export const XlsxUploadModal: React.FC<XlsxUploadModalProps> = ({
         {/* Footer */}
         <div className="p-6 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="bg-white border border-slate-200 px-3 py-1.5 rounded-xl text-xs font-black text-slate-500 shadow-xs flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-emerald-700" />
-              <span>{parsedSheets.filter(s => s.selected).length} Sheets Active</span>
-            </div>
+            {step === 'review' && (
+              <div className="bg-white border border-slate-200 px-3 py-1.5 rounded-xl text-xs font-black text-slate-500 shadow-xs flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-emerald-700" />
+                <span>{parsedSheets.filter(s => s.selected).length} Sheets Active</span>
+              </div>
+            )}
+            {step === 'mapping' && (
+              <div className="bg-white border border-slate-200 px-3 py-1.5 rounded-xl text-xs font-black text-slate-500 shadow-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-emerald-700" />
+                <span>Map required fields to continue</span>
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-3">
             <button
@@ -432,14 +572,28 @@ export const XlsxUploadModal: React.FC<XlsxUploadModalProps> = ({
             >
               Cancel
             </button>
-            <button
-              onClick={handleConfirmImport}
-              disabled={parsedSheets.length === 0 || !parsedSheets.some(s => s.selected)}
-              className="px-8 py-2.5 text-sm font-black text-white bg-emerald-800 hover:bg-emerald-900 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl shadow-lg shadow-emerald-900/10 transition-all inline-flex items-center gap-2 active:scale-95"
-            >
-              <Check className="w-5 h-5" />
-              Commit Selected Tabs
-            </button>
+
+            {step === 'mapping' && (
+              <button
+                onClick={proceedToProcessing}
+                disabled={loading}
+                className="px-8 py-2.5 text-sm font-black text-white bg-emerald-800 hover:bg-emerald-900 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl shadow-lg shadow-emerald-900/10 transition-all inline-flex items-center gap-2 active:scale-95"
+              >
+                Continue to Review
+                <ArrowRight className="w-5 h-5" />
+              </button>
+            )}
+
+            {step === 'review' && (
+              <button
+                onClick={handleConfirmImport}
+                disabled={parsedSheets.length === 0 || !parsedSheets.some(s => s.selected)}
+                className="px-8 py-2.5 text-sm font-black text-white bg-emerald-800 hover:bg-emerald-900 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl shadow-lg shadow-emerald-900/10 transition-all inline-flex items-center gap-2 active:scale-95"
+              >
+                <Check className="w-5 h-5" />
+                Commit Selected Tabs
+              </button>
+            )}
           </div>
         </div>
       </div>

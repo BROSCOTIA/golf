@@ -38,28 +38,32 @@ body {
 
 @media print {
   /* Hide interactive/navigation/fixed UI controls when printing */
-  header,
+  header:not(.print-header),
   nav,
   aside,
   footer,
   button,
   input,
   select,
+  textarea,
   .no-print,
   .sticky,
-  .fixed,
+  .fixed:not(.printable-modal-wrapper),
   [role="dialog"] button,
   [role="dialog"] input,
   [role="dialog"] select,
   .batch-action-bar,
-  .mobile-nav {
+  .mobile-nav,
+  .tab-buttons,
+  .filters-panel,
+  .search-container {
     display: none !important;
   }
 
   /* Reset document background & text colors for high-contrast black/white print */
   *, *::before, *::after {
     background: transparent !important;
-    color: #0f172a !important;
+    color: #000000 !important;
     box-shadow: none !important;
     text-shadow: none !important;
     filter: none !important;
@@ -72,20 +76,21 @@ body {
     color: #000000 !important;
     font-size: 10pt !important;
     line-height: 1.5 !important;
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
     margin: 0 !important;
     padding: 0 !important;
   }
 
   @page {
-    margin: 15mm;
-    size: auto;
+    margin: 20mm 15mm 20mm 15mm;
+    size: letter;
   }
 
-  /* Full width container expansion */
+  /* Full width container expansion for print-readiness */
   main,
   #root,
-  .printable-area {
+  .printable-area,
+  .container {
     position: static !important;
     display: block !important;
     width: 100% !important;
@@ -93,38 +98,79 @@ body {
     margin: 0 !important;
     padding: 0 !important;
     overflow: visible !important;
+    background: none !important;
+    border: none !important;
   }
 
-  /* Print Tables - POS Record Style */
+  /* Handle open modals: render statically instead of fixed overlay, making it full page */
+  .fixed.printable-modal-wrapper {
+    position: static !important;
+    display: block !important;
+    background: none !important;
+    backdrop-filter: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+  }
+
+  .printable-modal-content {
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: block !important;
+    overflow: visible !important;
+  }
+
+  /* Hide tabs or columns we don't want in tables during print */
+  th:last-child, 
+  td:last-child {
+    display: none !important; /* Hide action column */
+  }
+
+  /* Print Tables - High Contrast, Ledger Style */
   table {
     width: 100% !important;
     border-collapse: collapse !important;
-    margin-top: 20px !important;
-    margin-bottom: 20px !important;
+    margin-top: 15px !important;
+    margin-bottom: 25px !important;
   }
 
   th, td {
-    border-bottom: 1px solid #000000 !important;
-    padding: 8px 12px !important;
+    border-bottom: 1px solid #1e293b !important;
+    padding: 6px 10px !important;
     text-align: left !important;
-    font-size: 9pt !important;
+    font-size: 8.5pt !important;
+    word-break: break-all !important;
+    white-space: normal !important;
   }
 
   th {
-    background-color: #f8fafc !important;
+    background-color: #f1f5f9 !important;
     font-weight: 800 !important;
     text-transform: uppercase !important;
     letter-spacing: 0.05em !important;
     border-top: 2px solid #000000 !important;
     border-bottom: 2px solid #000000 !important;
+    color: #000000 !important;
   }
 
   /* Specific Receipt Layout for Individual Records */
   .receipt-view {
-    max-width: 80mm !important; /* Standard thermal receipt width */
-    margin: 0 auto !important;
-    border: 1px dashed #000 !important;
-    padding: 10mm !important;
+    max-width: 100mm !important;
+    margin: 20px auto !important;
+    border: 2px dashed #000000 !important;
+    padding: 15mm !important;
+    background: #ffffff !important;
+    color: #000000 !important;
   }
 
   /* Page Break Rules */
@@ -139,43 +185,149 @@ body {
     page-break-after: avoid !important;
     break-after: avoid !important;
     color: #000000 !important;
-    margin-top: 24px !important;
-    margin-bottom: 12px !important;
+    margin-top: 20px !important;
+    margin-bottom: 10px !important;
   }
 
   /* Printable Header Block - GOLF TOWN Style */
   .print-header {
-    display: block !important;
-    border-bottom: 4px solid #065f46 !important; /* emerald-800 */
-    padding-bottom: 12px !important;
-    margin-bottom: 24px !important;
-    text-align: center !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    border-bottom: 3px solid #065f46 !important; /* emerald-800 */
+    padding-bottom: 15px !important;
+    margin-bottom: 25px !important;
+  }
+
+  .print-logo-container {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+  }
+
+  .print-logo-symbol {
+    font-size: 24pt !important;
+    font-weight: 900 !important;
+    color: #064e3b !important;
+    border: 3px solid #064e3b !important;
+    padding: 2px 8px !important;
+    line-height: 1 !important;
+    text-transform: uppercase !important;
+  }
+
+  .print-title-group {
+    display: flex !important;
+    flex-direction: column !important;
   }
 
   .print-header h1 {
-    font-size: 22pt !important;
+    font-size: 20pt !important;
     font-weight: 900 !important;
     margin: 0 !important;
     color: #064e3b !important; /* emerald-900 */
     text-transform: uppercase !important;
-    letter-spacing: -0.02em !important;
+    letter-spacing: -0.01em !important;
+    line-height: 1.1 !important;
   }
 
   .print-header p {
-    font-size: 10pt !important;
+    font-size: 9pt !important;
     color: #334155 !important;
-    margin: 4px 0 0 0 !important;
+    margin: 3px 0 0 0 !important;
     font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+  }
+
+  .print-header-meta {
+    text-align: right !important;
+    font-size: 8pt !important;
+    color: #475569 !important;
+  }
+
+  /* Custom Print Audit Summary Box */
+  .print-audit-summary-box {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 12px !important;
+    border: 1.5px solid #000000 !important;
+    background-color: #f8fafc !important;
+    padding: 12px !important;
+    margin-bottom: 25px !important;
+    border-radius: 6px !important;
+  }
+
+  .print-audit-item {
+    border-right: 1px solid #cbd5e1 !important;
+    padding-right: 10px !important;
+  }
+
+  .print-audit-item:last-child {
+    border-right: none !important;
+    padding-right: 0 !important;
+  }
+
+  .print-audit-label {
+    font-size: 7.5pt !important;
+    font-weight: bold !important;
+    color: #475569 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    margin-bottom: 2px !important;
+    display: block !important;
+  }
+
+  .print-audit-value {
+    font-size: 11pt !important;
+    font-weight: 900 !important;
+    color: #000000 !important;
+    display: block !important;
   }
 
   /* Audit Badge Styles in Print */
   .audit-badge {
-    border: 1px solid #000 !important;
-    padding: 2px 6px !important;
-    border-radius: 4px !important;
+    border: 1.5px solid #000000 !important;
+    padding: 1px 5px !important;
+    border-radius: 3px !important;
     font-weight: 800 !important;
-    font-size: 8pt !important;
+    font-size: 7.5pt !important;
     text-transform: uppercase !important;
+    background-color: #f1f5f9 !important;
+    display: inline-block !important;
+  }
+
+  /* Style single-customer card statements for print-ready layout */
+  .printable-customer-card {
+    border: 1.5px solid #000000 !important;
+    padding: 15px !important;
+    margin-bottom: 20px !important;
+    border-radius: 8px !important;
+    background: #ffffff !important;
+  }
+
+  .printable-customer-card h2 {
+    border-bottom: 1px solid #cbd5e1 !important;
+    padding-bottom: 6px !important;
+    margin-top: 0 !important;
+  }
+
+  .print-two-col {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 15px !important;
+    margin-top: 12px !important;
+  }
+
+  .print-col-item {
+    font-size: 9pt !important;
+    line-height: 1.4 !important;
+  }
+
+  .print-col-label {
+    font-weight: bold !important;
+    color: #334155 !important;
+    display: inline-block !important;
+    width: 140px !important;
   }
 }
 

@@ -231,8 +231,8 @@ export function CustomReceiptRefundModal({ isOpen, onClose, customers }: CustomR
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-50/85 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="bg-white border border-emerald-200 rounded-3xl w-full max-w-5xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 z-50 bg-slate-50/85 backdrop-blur-md flex items-center justify-center p-4 printable-modal-wrapper">
+      <div className="bg-white border border-emerald-200 rounded-3xl w-full max-w-5xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] printable-modal-content">
         
         {/* HEADER */}
         <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
@@ -255,20 +255,55 @@ export function CustomReceiptRefundModal({ isOpen, onClose, customers }: CustomR
 
           <button
             onClick={onClose}
-            className="w-9 h-9 rounded-full bg-white hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900 transition-colors"
+            className="w-9 h-9 rounded-full bg-white hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900 transition-colors no-print"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* CONTENT GRID */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 flex-1 overflow-y-auto p-6 gap-6 bg-white">
+        <div className="grid grid-cols-1 lg:grid-cols-12 flex-1 overflow-y-auto p-6 gap-6 bg-white print:block print:p-0">
           
           {/* LEFT COLUMN: CUSTOMER & ITEM ENTRY */}
-          <div className="lg:col-span-7 space-y-5">
+          <div className="lg:col-span-7 print:col-span-12 print:w-full space-y-5">
+            
+            {/* PRINT-ONLY RECEIPT BRANDING & METADATA */}
+            <div className="hidden print:block border-b-2 border-dashed border-slate-950 pb-4 mb-4">
+              <div className="text-center space-y-1">
+                <div className="text-lg font-black tracking-widest uppercase">GOLF TOWN</div>
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Store #{storeId} - Calgary Alberta Operations</div>
+                <div className="text-[9px] text-slate-400">Official Store Credit Refund Voucher</div>
+              </div>
+              <div className="mt-4 text-[10px] space-y-1 border-t border-slate-200 pt-3">
+                <div className="flex justify-between">
+                  <span className="font-bold">Customer:</span>
+                  <span>{customerName || 'Walk-in / Verified Account'}</span>
+                </div>
+                {customerEmail && (
+                  <div className="flex justify-between">
+                    <span className="font-bold">Email:</span>
+                    <span>{customerEmail}</span>
+                  </div>
+                )}
+                {customerPhone && (
+                  <div className="flex justify-between">
+                    <span className="font-bold">Phone:</span>
+                    <span>{customerPhone}</span>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <span className="font-bold">Date:</span>
+                  <span>{new Date().toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-bold">Verification:</span>
+                  <span className="font-mono font-bold text-emerald-800">✓ ISSUED &amp; COMPLIANT</span>
+                </div>
+              </div>
+            </div>
             
             {/* CUSTOMER SELECTOR */}
-            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3 no-print">
               <div className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center justify-between">
                 <span>1. Select Customer or Enter Details</span>
                 <span className="text-[10px] text-emerald-700 font-normal">Store #504 Calgary / Alberta Operations</span>
@@ -352,7 +387,7 @@ export function CustomReceiptRefundModal({ isOpen, onClose, customers }: CustomR
               </div>
 
               {/* ADD ITEM FORM */}
-              <form onSubmit={handleAddItem} className="flex items-center gap-2">
+              <form onSubmit={handleAddItem} className="flex items-center gap-2 no-print">
                 <input
                   type="text"
                   value={newItemName}
@@ -396,7 +431,7 @@ export function CustomReceiptRefundModal({ isOpen, onClose, customers }: CustomR
                         <button
                           type="button"
                           onClick={() => handleRemoveItem(item.id)}
-                          className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-rose-950 hover:text-rose-400 text-slate-500 flex items-center justify-center transition-colors"
+                          className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-rose-950 hover:text-rose-400 text-slate-500 flex items-center justify-center transition-colors no-print"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -427,7 +462,7 @@ export function CustomReceiptRefundModal({ isOpen, onClose, customers }: CustomR
           </div>
 
           {/* RIGHT COLUMN: TRYCLOUDFLARE LINKER & CONTROLS */}
-          <div className="lg:col-span-5 space-y-5 flex flex-col justify-between">
+          <div className="lg:col-span-5 space-y-5 flex flex-col justify-between no-print">
             
             <div className="space-y-4">
               
@@ -510,7 +545,7 @@ export function CustomReceiptRefundModal({ isOpen, onClose, customers }: CustomR
             </div>
 
             {/* DISPATCH ACTION */}
-            <div className="space-y-3 pt-4 border-t border-slate-200">
+            <div className="space-y-3 pt-4 border-t border-slate-200 no-print">
               {dispatchStatus && (
                 <div className="p-3 bg-emerald-50/60 border border-emerald-600/50 rounded-xl text-xs text-emerald-200 text-center font-medium">
                   {dispatchStatus}

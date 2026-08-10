@@ -100,6 +100,9 @@ cmd_start() {
     export NPM_CONFIG_FUND=false
     export NPM_CONFIG_LOGLEVEL=error
 
+    # Stop any existing processes first
+    cmd_stop
+    
     # Ensure dependencies are installed if node_modules is missing
     if [[ ! -d "${SCRIPT_DIR}/node_modules" ]]; then
         info "Installing dependencies..."
@@ -161,10 +164,23 @@ cmd_tunnel_start() {
     info "Preparing TryCloudflare Tunnel..."
     local CLOUDFLARED_BIN="./cloudflared"
     
-    # 1. Check if cloudflared exists, if not, download it
+    # 1. Check if cloudflared is already installed in PATH
     if ! command -v cloudflared &>/dev/null; then
-        if [[ ! -f "$CLOUDFLARED_BIN" ]]; then
-            info "Downloading cloudflared binary for Linux..."
+        # Check if we are running in Termux
+        if [[ -d "/data/data/com.termux/files/usr" ]] || command -v termux-setup-storage &>/dev/null; then
+            info "Termux environment detected! Installing cloudflared via pkg..."
+            pkg install -y cloudflared || apt-get install -y cloudflared
+            if command -v cloudflared &>/dev/null; then
+                CLOUDFLARED_BIN="cloudflared"
+                ok "Successfully installed cloudflared in Termux."
+            else
+                warn "pkg install failed, falling back to downloading precompiled binary..."
+            fi
+        fi
+
+        # If not in Termux or pkg install failed, try downloading static binary
+        if [[ "$CLOUDFLARED_BIN" == "./cloudflared" && ! -f "$CLOUDFLARED_BIN" ]]; then
+            info "Downloading cloudflared binary..."
             local ARCH=$(uname -m)
             local URL="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64"
             if [[ "$ARCH" == "aarch64" || "$ARCH" == "arm64" ]]; then
@@ -173,7 +189,7 @@ cmd_tunnel_start() {
             
             if curl -L -f -s "$URL" -o "$CLOUDFLARED_BIN"; then
                 chmod +x "$CLOUDFLARED_BIN"
-                ok "Downloaded and configured cloudflared."
+                ok "Downloaded and configured cloudflared binary."
             else
                 fail "Failed to download cloudflared binary."
                 exit 1
@@ -187,9 +203,9 @@ cmd_tunnel_start() {
     pkill -f "cloudflared tunnel" &>/dev/null || true
     rm -f .cloudflare_url .cloudflare_log 2>/dev/null
 
-    # 3. Launch cloudflared tunnel pointing at the local app URL
-    info "Starting TryCloudflare tunnel for http://127.0.0.1:${PORT}..."
-    nohup "$CLOUDFLARED_BIN" tunnel --url "http://127.0.0.1:${PORT}" > .cloudflare_log 2>&1 &
+    # 3. Launch cloudflared tunnel pointing at the local app URL (always port 3000 where our express app is actually listening)
+    info "Starting TryCloudflare tunnel for http://127.0.0.1:3000..."
+    nohup "$CLOUDFLARED_BIN" tunnel --url "http://127.0.0.1:3000" > .cloudflare_log 2>&1 &
     
     # 4. Wait & extract the assigned .trycloudflare.com URL from logs
     local count=0
